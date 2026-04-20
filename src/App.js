@@ -2,6 +2,7 @@ import "./App.css";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
+import { Analytics } from "@vercel/analytics/react";
 import Layout from "./Layout/Layout";
 import Login from "./Login/Login";
 import Register from "./Login/Register";
@@ -177,6 +178,8 @@ function App() {
 
         <ToastContainer position="top-right" />
       </div>
+
+      <Analytics />
     </div>
   );
 }
