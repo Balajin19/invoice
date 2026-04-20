@@ -26,6 +26,7 @@ import { fetchBanks } from "./store/banks";
 import { fetchInvoiceSettings } from "./store/invoiceSettings";
 import { fetchUserProfile } from "./store/user";
 import { getCookie } from "./utils/cookies";
+import { Analytics } from "@vercel/analytics/react";
 
 const getPageTitle = (pathname) => {
   if (pathname === "/") return "Home";
@@ -177,6 +178,7 @@ function App() {
 
         <ToastContainer position="top-right" />
       </div>
+      <Analytics />
     </div>
   );
 }
