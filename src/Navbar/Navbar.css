@@ -1,0 +1,245 @@
+.custom-navbar {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 9999;
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: linear-gradient(90deg, #0f2027, #203a43, #2c5364);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 20px;
+
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Layout fix */
+.container-fluid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand {
+  color: #fff;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.nav-links a {
+  color: #ddd;
+  text-decoration: none;
+  font-size: 15px;
+  transition: 0.3s;
+  position: relative;
+}
+
+.nav-links a:hover {
+  color: #fff;
+}
+
+.active-link {
+  color: #fff !important;
+}
+
+.nav-links a.active-link::after {
+  width: 100%;
+}
+
+/* underline animation */
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 0;
+  height: 2px;
+  background: #00c6ff;
+  transition: 0.3s;
+}
+
+.nav-links a:hover::after {
+  width: 100%;
+}
+
+.user-menu {
+  position: relative;
+  cursor: pointer;
+}
+
+/* ICON + TEXT DEFAULT (Desktop) */
+.user-text {
+  display: none;
+}
+
+.user-text-loading {
+  opacity: 0.7;
+}
+
+.user-icon {
+  display: block;
+  font-size: 26px;
+  color: white;
+  transition: opacity 0.2s ease;
+}
+
+/* Dropdown */
+.dropdown-menu-custom {
+  position: absolute;
+  right: 0;
+  top: 40px;
+  background: white;
+  border-radius: 8px;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
+  z-index: 1000;
+}
+
+/* Items */
+.dropdown-menu-custom a,
+.dropdown-menu-custom .dropdown-item {
+  display: block;
+  padding: 10px 15px;
+  text-decoration: none;
+  color: #333;
+  font-size: 14px;
+}
+
+.dropdown-menu-custom a:hover,
+.dropdown-menu-custom .dropdown-item:hover {
+  background: #f5f5f5;
+}
+
+.logout {
+  color: red;
+}
+
+/* Hide hamburger in desktop */
+.hamburger-toggle {
+  display: none;
+  font-size: 26px;
+  color: white;
+  cursor: pointer;
+}
+
+/* TABLET + MOBILE */
+@media (max-width: 992px) {
+  .hamburger-toggle {
+    display: block;
+  }
+
+  .nav-right {
+    position: absolute;
+    top: 64px;
+    right: 0;
+    width: 100%;
+    background: #2c3e50;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 16px;
+
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px);
+    transition: all 0.25s ease;
+  }
+
+  .nav-right.show-menu {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  .nav-links {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .nav-links a {
+    padding: 6px 0;
+    width: 100%;
+  }
+
+  .user-menu {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  /* USER TEXT STYLE */
+  .user-text {
+    width: 100%;
+    display: none;
+    color: #ddd;
+    text-decoration: none;
+    font-size: 15px;
+    transition: 0.3s;
+    position: relative;
+    padding: 6px 0;
+  }
+
+  .user-text:hover {
+    color: #fff;
+  }
+
+  .user-text::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -4px;
+    width: 0;
+    height: 2px;
+    background: #00c6ff;
+    transition: 0.3s;
+  }
+
+  .user-text:hover::after {
+    width: 100%;
+  }
+
+  /*VISIBILITY TOGGLE */
+  .user-text.show-user {
+    display: block;
+  }
+
+  .user-icon.hide-icon {
+    display: none;
+  }
+
+  .dropdown-menu-custom {
+    right: auto;
+    left: 0;
+    min-width: 180px;
+  }
+}
+
+/* SMALL MOBILE */
+@media (max-width: 576px) {
+  .custom-navbar {
+    padding: 10px 12px;
+  }
+
+  .brand {
+    font-size: 16px;
+    letter-spacing: 0.4px;
+    max-width: calc(100vw - 80px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

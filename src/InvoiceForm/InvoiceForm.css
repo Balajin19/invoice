@@ -1,0 +1,75 @@
+.create-invoice-container {
+  padding: 20px;
+}
+
+td[contenteditable="true"]:focus {
+  outline: 2px solid #e3e3e4;
+  background: #f6f9fd;
+}
+
+td[data-col="product"]:empty::before {
+  content: "Click or type product";
+  color: #999;
+}
+
+.qty-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  text-align: left;
+  padding: 0;
+  margin: 0;
+}
+
+.qty-input:disabled {
+  background: transparent;
+}
+
+.product-input {
+  border: none;
+  background: transparent;
+  width: 100%;
+}
+
+.product-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: white;
+}
+
+.label {
+  padding-bottom: 6px;
+}
+
+@media (max-width: 992px) {
+  .card-body {
+    overflow-x: auto;
+  }
+
+  .table th,
+  .table td {
+    min-width: 110px;
+  }
+
+  .table th:first-child,
+  .table td:first-child {
+    min-width: 60px;
+  }
+}
+
+@media (max-width: 576px) {
+  thead th {
+    position: static;
+  }
+
+  .label {
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+}

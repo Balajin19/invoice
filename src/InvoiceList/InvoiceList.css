@@ -1,0 +1,32 @@
+.invoice-search-container {
+  background: #f8fbff;
+  border: 1px solid #e3edf8;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.invoice-search-input {
+  background: #ffffff;
+  border-color: #cfdff2;
+}
+
+.invoice-search-input:focus {
+  border-color: #6ea8fe;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
+}
+
+.invoice-print-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 16px;
+}
+
+.invoice-print-dialog {
+  width: 100%;
+  max-width: 420px;
+}

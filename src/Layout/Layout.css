@@ -1,0 +1,17 @@
+.page-container {
+  min-height: 100vh;
+  background: rgba(245, 247, 250, 0.2);
+  padding: 90px 25px 25px; /* top padding = navbar height */
+}
+
+@media (max-width: 992px) {
+  .page-container {
+    padding: 86px 16px 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .page-container {
+    padding: 82px 12px 12px;
+  }
+}

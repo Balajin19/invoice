@@ -1,0 +1,71 @@
+.settings-selector {
+  margin-bottom: 14px;
+}
+
+/* Header (label + buttons) */
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px; /*THIS FIXES GAP WITH DROPDOWN */
+}
+
+.settings-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Label (no need heavy margin now) */
+.settings-selector label {
+  margin: 0;
+}
+
+/* Dropdown spacing */
+.settings-selector .form-select {
+  margin-top: 4px;
+}
+
+/* Mobile fix */
+@media (max-width: 576px) {
+  .settings-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 10px; /* extra space in mobile */
+  }
+
+  .settings-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .settings-selector .form-select {
+    margin-top: 6px;
+  }
+}
+
+.settings-actions button {
+  min-width: 60px;
+}
+
+.settings-tabs {
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 20px; /* 👈 add this */
+}
+
+.settings-tabs button {
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+}
+
+.settings-tabs button.active {
+  border-bottom: 2px solid #007bff;
+  color: #007bff;
+}
