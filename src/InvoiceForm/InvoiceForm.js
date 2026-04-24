@@ -8,6 +8,8 @@ import { useInputGridNavigation } from "../hooks/useInputGridNavigation";
 import ProductModal from "../Products/ProductModel";
 import { customerApi, invoiceApi, unitApi } from "../services/api";
 import { fetchInvoiceSettings } from "../store/invoiceSettings";
+import { fetchCompanies } from "../store/companies";
+import { fetchBanks } from "../store/banks";
 import {
   formatInvoiceNumber,
   getNextInvoiceNumberFromSettings,
@@ -22,6 +24,11 @@ function InvoiceForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const companiesLoaded = useSelector((state) => state.companies?.loaded);
+  const banksLoaded = useSelector((state) => state.banks?.loaded);
+  const invoiceSettingsLoaded = useSelector(
+    (state) => state.invoiceSettings?.loaded,
+  );
   const companyList = useSelector((state) => state.companies?.data || []);
 
   const bankList = useSelector((state) => state.banks?.data || []);
@@ -63,10 +70,15 @@ function InvoiceForm() {
       );
     }
   }
-  const shouldBlockNewInvoice = !id && invoiceSetupIssues.length > 0;
+  const isSetupDataReady =
+    Boolean(companiesLoaded) &&
+    Boolean(banksLoaded) &&
+    (companyList.length === 0 || Boolean(invoiceSettingsLoaded));
+  const shouldBlockNewInvoice =
+    !id && isSetupDataReady && invoiceSetupIssues.length > 0;
   const sellerName = companySettings.companyName || "";
   const sellerAddressWithPincode = formatAddress({
-    buildingNo: companySettings.buildingNumber || "",
+    buildingNumber: companySettings.buildingNumber || "",
     street: companySettings.street || "",
     city: companySettings.city || "",
     district: companySettings.district || "",
@@ -152,11 +164,6 @@ function InvoiceForm() {
   const syncedInvoiceSettingsCompanyIdRef = useRef("");
 
   useEffect(() => {
-    if (shouldBlockNewInvoice) {
-      setIsInitialLoading(false);
-      return;
-    }
-
     const loadInvoiceForm = async () => {
       setIsInitialLoading(true);
 
@@ -190,6 +197,7 @@ function InvoiceForm() {
           setSelectedProducts(
             (invoice.products || []).map((product) => ({
               ...product,
+              qty: Number(product.qty ?? 0).toFixed(2),
               unitId:
                 product.unitId ||
                 (unitsRes.data || []).find(
@@ -229,16 +237,36 @@ function InvoiceForm() {
             );
           }
         } else {
+          let latestCompanies = companyList;
+          let latestBanks = bankList;
+
+          if (!latestCompanies.length) {
+            try {
+              latestCompanies = await dispatch(fetchCompanies());
+            } catch {
+              latestCompanies = [];
+            }
+          }
+
+          if (!latestBanks.length) {
+            try {
+              latestBanks = await dispatch(fetchBanks());
+            } catch {
+              latestBanks = [];
+            }
+          }
+
           const customerRes = await customerApi.list();
+          const selectedCompany =
+            latestCompanies.find((company) => company?.isPrimary) ||
+            latestCompanies[0] ||
+            companySettings;
           const companyId = String(
-            companySettings?.companyId || companySettings?.id || "",
+            selectedCompany?.companyId || selectedCompany?.id || "",
           );
           let latestInvoiceSettings = invoiceSettings;
 
-          if (
-            companyId &&
-            syncedInvoiceSettingsCompanyIdRef.current !== companyId
-          ) {
+          if (companyId) {
             try {
               latestInvoiceSettings = await dispatch(
                 fetchInvoiceSettings(companyId),
@@ -264,19 +292,7 @@ function InvoiceForm() {
     };
 
     loadInvoiceForm();
-  }, [
-    hasBank,
-    hasCompany,
-    hasCompleteInvoiceSettings,
-    hasPrimaryBank,
-    hasPrimaryCompany,
-    id,
-    invoiceSettings,
-    dispatch,
-    companySettings?.companyId,
-    companySettings?.id,
-    shouldBlockNewInvoice,
-  ]);
+  }, [id, dispatch]);
 
   const normalizeStateName = (value = "") =>
     String(value)
@@ -593,7 +609,7 @@ function InvoiceForm() {
       products: filledProducts.map((product) => ({
         ...product,
         unit: units.find((u) => u.unitId === product.unitId)?.unitName || "",
-        qty: Number(product.qty) || 0,
+        qty: parseFloat((Number(product.qty) || 0).toFixed(2)),
         price: Number(product.price) || 0,
         discount: Number(product.discount) || 0,
         cgstRate: Number(product.cgstRate) || 0,
@@ -796,14 +812,14 @@ function InvoiceForm() {
               <div className="card-header fw-bold">Products</div>
               <div className="card-body">
                 {selectedProducts && selectedProducts.length > 0 ? (
-                  <table className="table table-bordered table-hover text-center">
+                  <table className="table table-bordered table-hover text-center invoice-products-table">
                     <thead className="table-light">
                       <tr>
                         <th>S.No</th>
-                        <th>Product</th>
+                        <th className="product-col">Product</th>
                         <th>HSN/SAC</th>
-                        <th>Unit</th>
-                        <th>Quantity</th>
+                        <th className="unit-col">Unit</th>
+                        <th className="qty-col">Quantity</th>
                         <th>Rate</th>
                         <th>Disc %</th>
                         <th>Amount</th>
@@ -819,12 +835,18 @@ function InvoiceForm() {
                         <tr key={index}>
                           <td>{index + 1}</td>
 
-                          <td data-row={index} data-col="product">
+                          <td
+                            className="product-col"
+                            data-row={index}
+                            data-col="product"
+                            title={product.productName || ""}
+                          >
                             <input
                               ref={(el) => setRef(index, "product", el)}
                               type="text"
                               className="form-control"
                               value={product.productName}
+                              title={product.productName || ""}
                               readOnly
                               placeholder="Click or type product"
                               onClick={() => {
@@ -900,10 +922,28 @@ function InvoiceForm() {
                             />
                           </td>
                           <td>{product.hsnSac || ""}</td>
-                          <td data-row={index} data-col="unit">
+                          <td
+                            className="unit-col"
+                            data-row={index}
+                            data-col="unit"
+                            title={
+                              units.find(
+                                (unit) => unit.unitId === product.unitId,
+                              )?.unitName ||
+                              product.unit ||
+                              ""
+                            }
+                          >
                             <select
-                              className="form-select"
+                              className="form-select unit-select"
                               value={product.unitId || ""}
+                              title={
+                                units.find(
+                                  (unit) => unit.unitId === product.unitId,
+                                )?.unitName ||
+                                product.unit ||
+                                ""
+                              }
                               disabled={!product.productName}
                               onChange={(e) =>
                                 handleUnitChange(index, e.target.value)
@@ -917,13 +957,19 @@ function InvoiceForm() {
                               ))}
                             </select>
                           </td>
-                          <td data-row={index} data-col="qty">
+                          <td
+                            className="qty-col"
+                            data-row={index}
+                            data-col="qty"
+                            title={product.qty || ""}
+                          >
                             <input
                               ref={(el) => setRef(index, "qty", el)}
                               type="text"
                               inputMode="decimal"
                               className="form-control"
                               value={product.qty}
+                              title={product.qty || ""}
                               disabled={!product.productName}
                               onChange={(e) =>
                                 handleQtyChange(index, e.target.value)

@@ -62,7 +62,7 @@ export const confirmAndHandleDelete = async ({
 
 export const formatAddress = (address = {}) => {
   const formattedAddress = [
-    address.buildingNo,
+    address.buildingNumber,
     address.street,
     address.city,
     address.district,
@@ -201,7 +201,7 @@ export const numberToWords = (amount) => {
     if (wholeValue < 20) return ones[wholeValue];
 
     if (wholeValue < 100) {
-  return (
+      return (
         tens[Math.floor(wholeValue / 10)] +
         " " +
         ones[wholeValue % 10]
@@ -209,7 +209,7 @@ export const numberToWords = (amount) => {
     }
 
     if (wholeValue < 1000) {
-  return (
+      return (
         ones[Math.floor(wholeValue / 100)] +
         " Hundred " +
         convert(wholeValue % 100)
@@ -217,7 +217,7 @@ export const numberToWords = (amount) => {
     }
 
     if (wholeValue < 100000) {
-  return (
+      return (
         convert(Math.floor(wholeValue / 1000)) +
         " Thousand " +
         convert(wholeValue % 1000)
@@ -225,13 +225,13 @@ export const numberToWords = (amount) => {
     }
 
     if (wholeValue < 10000000) {
-  return (
+      return (
         convert(Math.floor(wholeValue / 100000)) +
         " Lakh " +
         convert(wholeValue % 100000)
       ).trim();
     }
-  
+
     return (
       convert(Math.floor(wholeValue / 10000000)) +
       " Crore " +

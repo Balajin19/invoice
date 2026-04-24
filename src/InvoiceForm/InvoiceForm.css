@@ -47,6 +47,29 @@ thead th {
   padding-bottom: 6px;
 }
 
+.invoice-products-table th.product-col,
+.invoice-products-table td.product-col {
+  min-width: 200px;
+  width: 200px;
+}
+
+.invoice-products-table th.unit-col,
+.invoice-products-table td.unit-col {
+  min-width: 90px;
+  width: 90px;
+}
+
+.invoice-products-table .unit-select {
+  min-width: 85px;
+  padding-right: 2rem;
+}
+
+.invoice-products-table th.qty-col,
+.invoice-products-table td.qty-col {
+  min-width: 85px;
+  width: 85px;
+}
+
 @media (max-width: 992px) {
   .card-body {
     overflow-x: auto;
@@ -60,6 +83,21 @@ thead th {
   .table th:first-child,
   .table td:first-child {
     min-width: 60px;
+  }
+
+  .invoice-products-table th.product-col,
+  .invoice-products-table td.product-col {
+    min-width: 210px;
+  }
+
+  .invoice-products-table th.unit-col,
+  .invoice-products-table td.unit-col {
+    min-width: 100px;
+  }
+
+  .invoice-products-table th.qty-col,
+  .invoice-products-table td.qty-col {
+    min-width: 80px;
   }
 }
 
