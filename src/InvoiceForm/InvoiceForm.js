@@ -162,6 +162,21 @@ function InvoiceForm() {
   const [loading, setLoading] = useState(false);
   const [units, setUnits] = useState([]);
   const syncedInvoiceSettingsCompanyIdRef = useRef("");
+  const companyListRef = useRef(companyList);
+  const bankListRef = useRef(bankList);
+  const invoiceSettingsRef = useRef(invoiceSettings);
+
+  useEffect(() => {
+    companyListRef.current = companyList;
+  }, [companyList]);
+
+  useEffect(() => {
+    bankListRef.current = bankList;
+  }, [bankList]);
+
+  useEffect(() => {
+    invoiceSettingsRef.current = invoiceSettings;
+  }, [invoiceSettings]);
 
   useEffect(() => {
     const loadInvoiceForm = async () => {
@@ -237,8 +252,8 @@ function InvoiceForm() {
             );
           }
         } else {
-          let latestCompanies = companyList;
-          let latestBanks = bankList;
+          let latestCompanies = companyListRef.current;
+          let latestBanks = bankListRef.current;
 
           if (!latestCompanies.length) {
             try {
@@ -257,14 +272,18 @@ function InvoiceForm() {
           }
 
           const customerRes = await customerApi.list();
+          const currentCompanySettings =
+            companyListRef.current.find((company) => company?.isPrimary) ||
+            companyListRef.current[0] ||
+            {};
           const selectedCompany =
             latestCompanies.find((company) => company?.isPrimary) ||
             latestCompanies[0] ||
-            companySettings;
+            currentCompanySettings;
           const companyId = String(
             selectedCompany?.companyId || selectedCompany?.id || "",
           );
-          let latestInvoiceSettings = invoiceSettings;
+          let latestInvoiceSettings = invoiceSettingsRef.current;
 
           if (companyId) {
             try {
