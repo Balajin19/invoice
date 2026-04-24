@@ -165,6 +165,9 @@ function InvoiceForm() {
   const companyListRef = useRef(companyList);
   const bankListRef = useRef(bankList);
   const invoiceSettingsRef = useRef(invoiceSettings);
+  const invoiceSettingsLoadedRef = useRef(invoiceSettingsLoaded);
+  const unitsRef = useRef([]);
+  const customersRef = useRef([]);
 
   useEffect(() => {
     companyListRef.current = companyList;
@@ -179,12 +182,46 @@ function InvoiceForm() {
   }, [invoiceSettings]);
 
   useEffect(() => {
+    invoiceSettingsLoadedRef.current = invoiceSettingsLoaded;
+  }, [invoiceSettingsLoaded]);
+
+  useEffect(() => {
+    unitsRef.current = units;
+  }, [units]);
+
+  useEffect(() => {
+    customersRef.current = customers;
+  }, [customers]);
+
+  useEffect(() => {
     const loadInvoiceForm = async () => {
       setIsInitialLoading(true);
 
       try {
-        const unitsRes = await unitApi.list();
-        setUnits(unitsRes.data || []);
+        // Fetch banks only when selector is empty to avoid unnecessary calls.
+        if (!bankListRef.current.length) {
+          try {
+            const fetchedBanks = await dispatch(fetchBanks());
+            if (Array.isArray(fetchedBanks)) {
+              bankListRef.current = fetchedBanks;
+            }
+          } catch (error) {
+            console.error("InvoiceForm: Failed to fetch banks", error);
+            if (!bankListRef.current.length) {
+              showErrorToast(
+                "Unable to load bank details. Please check Settings and try again.",
+                Slide,
+              );
+            }
+          }
+        }
+
+        let unitsData = unitsRef.current;
+        if (!unitsData.length) {
+          const unitsRes = await unitApi.list();
+          unitsData = unitsRes.data || [];
+          setUnits(unitsData);
+        }
 
         if (id) {
           const res = await invoiceApi.getById(id);
@@ -215,7 +252,7 @@ function InvoiceForm() {
               qty: Number(product.qty ?? 0).toFixed(2),
               unitId:
                 product.unitId ||
-                (unitsRes.data || []).find(
+                (unitsData || []).find(
                   (unitItem) => unitItem.unitName === product.unit,
                 )?.unitId ||
                 "",
@@ -241,11 +278,16 @@ function InvoiceForm() {
           setAmountInWords(invoice.amountInWords);
 
           if (invoice.customerId) {
-            const customerRes = await customerApi.list();
-            const customerData = customerRes.data.find(
+            let customerDataList = customersRef.current;
+            if (!customerDataList.length) {
+              const customerRes = await customerApi.list();
+              customerDataList = customerRes.data || [];
+              setCustomers(customerDataList);
+            }
+
+            const customerData = customerDataList.find(
               (customer) => customer.customerId === invoice.customerId,
             );
-            setCustomers(customerRes.data);
             setProducts(customerData?.products || []);
             setCustomerState(
               (customerData?.address?.state || "").toString().trim(),
@@ -253,25 +295,23 @@ function InvoiceForm() {
           }
         } else {
           let latestCompanies = companyListRef.current;
-          let latestBanks = bankListRef.current;
 
           if (!latestCompanies.length) {
             try {
               latestCompanies = await dispatch(fetchCompanies());
-            } catch {
+            } catch (error) {
+              console.error("InvoiceForm: Failed to fetch companies", error);
               latestCompanies = [];
             }
           }
 
-          if (!latestBanks.length) {
-            try {
-              latestBanks = await dispatch(fetchBanks());
-            } catch {
-              latestBanks = [];
-            }
+          let customerDataList = customersRef.current;
+          if (!customerDataList.length) {
+            const customerRes = await customerApi.list();
+            customerDataList = customerRes.data || [];
+            setCustomers(customerDataList);
           }
 
-          const customerRes = await customerApi.list();
           const currentCompanySettings =
             companyListRef.current.find((company) => company?.isPrimary) ||
             companyListRef.current[0] ||
@@ -285,13 +325,31 @@ function InvoiceForm() {
           );
           let latestInvoiceSettings = invoiceSettingsRef.current;
 
-          if (companyId) {
+          // When app-level data already loaded settings, mark this company as synced
+          // to avoid re-fetching the same settings on every create-invoice open.
+          if (
+            companyId &&
+            invoiceSettingsLoadedRef.current &&
+            !syncedInvoiceSettingsCompanyIdRef.current
+          ) {
+            syncedInvoiceSettingsCompanyIdRef.current = companyId;
+          }
+
+          if (
+            companyId &&
+            (!invoiceSettingsLoadedRef.current ||
+              syncedInvoiceSettingsCompanyIdRef.current !== companyId)
+          ) {
             try {
               latestInvoiceSettings = await dispatch(
                 fetchInvoiceSettings(companyId),
               );
               syncedInvoiceSettingsCompanyIdRef.current = companyId;
-            } catch {
+            } catch (error) {
+              console.error(
+                "InvoiceForm: Failed to fetch invoice settings",
+                error,
+              );
               // Keep using the current redux value when refresh fails.
             }
           }
@@ -300,7 +358,7 @@ function InvoiceForm() {
           setInvoiceNumber(
             getNextInvoiceNumberFromSettings(latestInvoiceSettings),
           );
-          setCustomers(customerRes.data);
+          setCustomers(customerDataList);
         }
       } catch (err) {
         console.error("Error loading invoice form data:", err);
