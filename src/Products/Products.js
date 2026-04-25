@@ -53,7 +53,12 @@ function Products() {
 
   const handleDelete = async (productId, productName) => {
     await confirmAndHandleDelete({
-      confirmMessage: `Are you sure you want to delete product "${productName}"?`,
+      confirmMessage: (
+        <>
+          Are you sure you want to delete product <strong>{productName}</strong>
+          ?
+        </>
+      ),
       confirmAction: (message) =>
         requestConfirmation({
           title: "Delete Product",

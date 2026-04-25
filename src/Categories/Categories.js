@@ -25,7 +25,7 @@ function Categories() {
       showErrorToast("Unable to load categories. Please try again.");
     }
   };
-  
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoadingCategories(true);
@@ -37,7 +37,7 @@ function Categories() {
 
     searchRef.current?.focus();
   }, []);
-  
+
   useEffect(() => {
     const filtered = categories.filter((category) =>
       (category.categoryName || "")
@@ -47,10 +47,15 @@ function Categories() {
 
     setFilteredCategories(filtered);
   }, [search, categories]);
-  
+
   const handleDelete = async (id, categoryName) => {
     await confirmAndHandleDelete({
-      confirmMessage: `Are you sure you want to delete category "${categoryName}"?`,
+      confirmMessage: (
+        <>
+          Are you sure you want to delete category{" "}
+          <strong>{categoryName}</strong>?
+        </>
+      ),
       confirmAction: (message) =>
         requestConfirmation({
           title: "Delete Category",
@@ -74,7 +79,7 @@ function Categories() {
       errorMessage: "Error deleting category. Please try again.",
     });
   };
-  
+
   return (
     <div className="container mt-4 mb-4">
       <h2 className="mb-4">My Categories</h2>
@@ -89,7 +94,6 @@ function Categories() {
         </p>
       ) : (
         <div className="d-flex align-items-center gap-3 mb-3">
-          
           <div className="position-relative" style={{ width: "250px" }}>
             <input
               ref={searchRef}
@@ -115,14 +119,12 @@ function Categories() {
             )}
           </div>
 
-          
           <Link to="/create-category" className="btn btn-primary">
             + Create Category
           </Link>
         </div>
       )}
 
-      
       {!isLoadingCategories &&
         !hasCategoriesLoadError &&
         filteredCategories.length > 0 && (

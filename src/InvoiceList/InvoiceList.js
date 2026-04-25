@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { useConfirmModal } from "../hooks/useConfirmModal";
@@ -22,12 +22,16 @@ function InvoiceList() {
   const invoiceSettings = useSelector((state) => state.settings?.data?.invoice);
   const { requestConfirmation, ConfirmModal } = useConfirmModal();
 
-  const fetchInvoices = async () => {
+  const isInvoiceActive = (invoice) => invoice?.isActive === true;
+
+  const fetchInvoices = useCallback(async () => {
     setIsLoadingInvoices(true);
 
     try {
       const res = await invoiceApi.list();
-      setInvoices(Array.isArray(res?.data) ? res.data : []);
+      setInvoices(
+        Array.isArray(res?.data) ? res.data.filter(isInvoiceActive) : [],
+      );
       setHasInvoicesLoadError(false);
     } catch (error) {
       console.error("Error loading invoices:", error);
@@ -36,11 +40,11 @@ function InvoiceList() {
     } finally {
       setIsLoadingInvoices(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchInvoices();
-  }, []);
+  }, [fetchInvoices]);
 
   useEffect(() => {
     if (!isLoadingInvoices && !hasInvoicesLoadError && invoices.length > 0) {

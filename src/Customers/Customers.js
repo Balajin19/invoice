@@ -37,7 +37,11 @@ function Customers() {
 
   const handleDelete = async (id, name) => {
     await confirmAndHandleDelete({
-      confirmMessage: `Are you sure you want to delete "${name}"?`,
+      confirmMessage: (
+        <>
+          Are you sure you want to delete customer <strong>{name}</strong>?
+        </>
+      ),
       confirmAction: (message) =>
         requestConfirmation({
           title: "Delete Customer",
