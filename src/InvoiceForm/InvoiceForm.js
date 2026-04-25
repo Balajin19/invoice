@@ -6,13 +6,12 @@ import "./InvoiceForm.css";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useInputGridNavigation } from "../hooks/useInputGridNavigation";
 import ProductModal from "../Products/ProductModel";
-import { customerApi, invoiceApi, unitApi } from "../services/api";
-import { fetchInvoiceSettings } from "../store/invoiceSettings";
+import { customerApi, invoiceApi, settingsApi, unitApi } from "../services/api";
 import { fetchCompanies } from "../store/companies";
 import { fetchBanks } from "../store/banks";
 import {
   formatInvoiceNumber,
-  getNextInvoiceNumberFromSettings,
+  getFinancialYearLabel,
   getPaymentTermDays,
   formatAddress,
   numberToWords,
@@ -161,11 +160,8 @@ function InvoiceForm() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [units, setUnits] = useState([]);
-  const syncedInvoiceSettingsCompanyIdRef = useRef("");
   const companyListRef = useRef(companyList);
   const bankListRef = useRef(bankList);
-  const invoiceSettingsRef = useRef(invoiceSettings);
-  const invoiceSettingsLoadedRef = useRef(invoiceSettingsLoaded);
   const unitsRef = useRef([]);
   const customersRef = useRef([]);
 
@@ -176,14 +172,6 @@ function InvoiceForm() {
   useEffect(() => {
     bankListRef.current = bankList;
   }, [bankList]);
-
-  useEffect(() => {
-    invoiceSettingsRef.current = invoiceSettings;
-  }, [invoiceSettings]);
-
-  useEffect(() => {
-    invoiceSettingsLoadedRef.current = invoiceSettingsLoaded;
-  }, [invoiceSettingsLoaded]);
 
   useEffect(() => {
     unitsRef.current = units;
@@ -323,41 +311,23 @@ function InvoiceForm() {
           const companyId = String(
             selectedCompany?.companyId || selectedCompany?.id || "",
           );
-          let latestInvoiceSettings = invoiceSettingsRef.current;
 
-          // When app-level data already loaded settings, mark this company as synced
-          // to avoid re-fetching the same settings on every create-invoice open.
-          if (
-            companyId &&
-            invoiceSettingsLoadedRef.current &&
-            !syncedInvoiceSettingsCompanyIdRef.current
-          ) {
-            syncedInvoiceSettingsCompanyIdRef.current = companyId;
-          }
-
-          if (
-            companyId &&
-            (!invoiceSettingsLoadedRef.current ||
-              syncedInvoiceSettingsCompanyIdRef.current !== companyId)
-          ) {
+          if (companyId) {
             try {
-              latestInvoiceSettings = await dispatch(
-                fetchInvoiceSettings(companyId),
-              );
-              syncedInvoiceSettingsCompanyIdRef.current = companyId;
+              const res = await settingsApi.getInvoiceSettings(companyId);
+              const raw = res?.data?.invoice || res?.data || {};
+              const startNumber = Number(raw?.startNumber) || 1;
+              const currentNumber = Number(raw?.currentNumber) || 0;
+              setInvoiceNumber(Math.max(startNumber, currentNumber + 1));
             } catch (error) {
               console.error(
                 "InvoiceForm: Failed to fetch invoice settings",
                 error,
               );
-              // Keep using the current redux value when refresh fails.
             }
           }
 
           setUseLoadedInvoiceTotals(false);
-          setInvoiceNumber(
-            getNextInvoiceNumberFromSettings(latestInvoiceSettings),
-          );
           setCustomers(customerDataList);
         }
       } catch (err) {
@@ -623,10 +593,11 @@ function InvoiceForm() {
     return true;
   };
 
-  const formattedInvoiceNumber = formatInvoiceNumber(
-    invoiceNumber,
-    invoiceSettings,
-  );
+  const currentFinancialYear = getFinancialYearLabel();
+  const formattedInvoiceNumber = formatInvoiceNumber(invoiceNumber, {
+    ...invoiceSettings,
+    financialYear: currentFinancialYear,
+  });
   const termsTemplate = (invoiceSettings?.terms || "").toString().trim();
   const termsWithoutPaymentLineItems = termsTemplate
     .split("\n")

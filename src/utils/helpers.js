@@ -86,8 +86,20 @@ export const toTitleCaseText = (value = "") =>
     .trimStart()
     .replace(/\b\w/g, (char) => char.toUpperCase());
 
-const getFinancialYearLabel = () => {
-  const validDate = new Date();
+export const getFinancialYearLabel = (dateInput) => {
+  const isDateOnlyString =
+    typeof dateInput === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateInput);
+  const parsedDate = isDateOnlyString
+    ? (() => {
+        const [year, month, day] = dateInput.split("-").map(Number);
+        return new Date(year, month - 1, day);
+      })()
+    : dateInput
+      ? new Date(dateInput)
+      : new Date();
+  const validDate = Number.isNaN(parsedDate.getTime())
+    ? new Date()
+    : parsedDate;
   const month = validDate.getMonth();
   const year = validDate.getFullYear();
   const startYear = month >= 3 ? year : year - 1;
@@ -126,23 +138,15 @@ export const formatInvoiceNumber = (invoiceNumber, invoiceSettings = {}) => {
     return "";
   }
 
-  const financialYear = getFinancialYearLabel();
+  const financialYear = (
+    invoiceSettings?.financialYear || getFinancialYearLabel()
+  )
+    .toString()
+    .trim();
   const padLength = Number(invoiceSettings?.padLength) || 3;
   const numericPortion = String(invoiceNumber).padStart(padLength, "0");
 
   return [prefix, numericPortion, financialYear].filter(Boolean).join("/");
-};
-
-export const getNextInvoiceNumberFromSettings = (invoiceSettings = {}) => {
-  const startNumber = Number(invoiceSettings?.startNumber);
-  const currentNumber = Number(invoiceSettings?.currentNumber);
-
-  const safeStartNumber =
-    Number.isFinite(startNumber) && startNumber > 0 ? startNumber : 1;
-  const safeCurrentNumber =
-    Number.isFinite(currentNumber) && currentNumber >= 0 ? currentNumber : 0;
-
-  return Math.max(safeStartNumber, safeCurrentNumber + 1);
 };
 
 export const getPaymentTermDays = (terms) => {

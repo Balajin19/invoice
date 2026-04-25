@@ -84,6 +84,7 @@ function Settings() {
     currentNumber: 0,
     padLength: 3,
     terms: "",
+    financialYear: "",
   });
   const [companyOptions, setCompanyOptions] = useState([]);
   const [bankOptions, setBankOptions] = useState([]);
@@ -139,6 +140,17 @@ function Settings() {
 
   const handleCompanyChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const uppercaseFields = new Set([
+      "companyName",
+      "ownerName",
+      "street",
+      "city",
+      "district",
+      "state",
+      "buildingNumber",
+      "gstin",
+    ]);
+
     setCompany((prev) => ({
       ...prev,
       [name]:
@@ -146,7 +158,9 @@ function Settings() {
           ? checked
           : name === "mobileNumber"
             ? normalizeMobileNumber(value)
-            : value,
+            : uppercaseFields.has(name)
+              ? toUpperCaseText(value)
+              : value,
     }));
   };
 
@@ -325,15 +339,15 @@ function Settings() {
       if (activeTab === "company") {
         const companyPayload = {
           ...company,
-          companyName: toUpperCaseText(company.companyName),
-          ownerName: toUpperCaseText(company.ownerName),
-          street: toUpperCaseText(company.street),
-          city: toUpperCaseText(company.city),
-          district: toUpperCaseText(company.district),
-          state: toUpperCaseText(company.state),
-          buildingNumber: toUpperCaseText(company.buildingNumber),
-          gstin: toUpperCaseText(company.gstin),
-          email: company.email,
+          companyName: (company.companyName || "").trim(),
+          ownerName: (company.ownerName || "").trim(),
+          street: (company.street || "").trim(),
+          city: (company.city || "").trim(),
+          district: (company.district || "").trim(),
+          state: (company.state || "").trim(),
+          buildingNumber: (company.buildingNumber || "").trim(),
+          gstin: (company.gstin || "").trim(),
+          email: (company.email || "").trim(),
           website: (company.website || "").trim(),
           mobileNumber: formatMobileNumberForPayload(company.mobileNumber),
           cgstRate: Number(company.cgstRate) || 0,
@@ -410,6 +424,7 @@ function Settings() {
           currentNumber: Number(invoice.currentNumber) || 0,
           padLength: Number(invoice.padLength) || 3,
           termsConditions: invoice.terms || "",
+          financialYear: invoice.financialYear || "",
         };
 
         if (invoice?.id) {
@@ -482,7 +497,12 @@ function Settings() {
     setIsSaving(true);
     try {
       await confirmAndHandleDelete({
-        confirmMessage: "Are you sure you want to delete this company?",
+        confirmMessage: (
+          <>
+            Are you sure you want to delete company{" "}
+            <strong>{company.companyName}</strong>?
+          </>
+        ),
         confirmAction: (message) =>
           requestConfirmation({
             title: "Delete Company",
@@ -532,7 +552,12 @@ function Settings() {
     setIsSaving(true);
     try {
       await confirmAndHandleDelete({
-        confirmMessage: "Are you sure you want to delete this bank?",
+        confirmMessage: (
+          <>
+            Are you sure you want to delete bank{" "}
+            <strong>{bank.bankName}</strong>?
+          </>
+        ),
         confirmAction: (message) =>
           requestConfirmation({
             title: "Delete Bank",
@@ -900,6 +925,14 @@ function Settings() {
         return (
           <div className="row">
             <div className="col-md-6">
+              <label>Financial Year</label>
+              <input
+                className="form-control"
+                value={invoice.financialYear || ""}
+                disabled
+              />
+            </div>
+            <div className="col-md-6">
               <label>Invoice Prefix</label>
               <input
                 className="form-control"
@@ -908,7 +941,7 @@ function Settings() {
                 onChange={handleInvoiceChange}
               />
             </div>
-            <div className="col-md-6">
+            <div className="col-md-6 mt-3">
               <label>Start Number</label>
               <input
                 type="number"

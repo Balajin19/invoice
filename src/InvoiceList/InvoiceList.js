@@ -19,8 +19,14 @@ function InvoiceList() {
   const [printOrientation, setPrintOrientation] = useState("P");
   const [invoiceToPrint, setInvoiceToPrint] = useState(null);
   const searchInputRef = useRef(null);
+  const companyList = useSelector((state) => state.companies?.data || []);
   const invoiceSettings = useSelector((state) => state.settings?.data?.invoice);
   const { requestConfirmation, ConfirmModal } = useConfirmModal();
+  const activeCompanyId = String(
+    companyList.find((company) => company?.isPrimary)?.companyId ||
+      companyList[0]?.companyId ||
+      "",
+  );
 
   const isInvoiceActive = (invoice) => invoice?.isActive === true;
 
@@ -28,7 +34,7 @@ function InvoiceList() {
     setIsLoadingInvoices(true);
 
     try {
-      const res = await invoiceApi.list();
+      const res = await invoiceApi.list(activeCompanyId || undefined);
       setInvoices(
         Array.isArray(res?.data) ? res.data.filter(isInvoiceActive) : [],
       );
@@ -40,7 +46,7 @@ function InvoiceList() {
     } finally {
       setIsLoadingInvoices(false);
     }
-  }, []);
+  }, [activeCompanyId]);
 
   useEffect(() => {
     fetchInvoices();

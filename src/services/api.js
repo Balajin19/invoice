@@ -2,7 +2,8 @@ import axios from "axios";
 import { getCookie } from "../utils/cookies";
 
 const apiBaseUrl = (
-  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080"
+  process.env.REACT_APP_API_BASE_URL ||
+  "https://skenterprises-backend.onrender.com"
 ).replace(/\/+$/, "");
 
 const apiClient = axios.create({
@@ -130,11 +131,14 @@ export const customerApi = {
 };
 
 export const invoiceApi = {
-  list: () => apiClient.get("/invoices"),
+  list: (companyId) =>
+    apiClient.get("/invoices", {
+      params: companyId ? { companyId } : undefined,
+    }),
   getById: (id) => apiClient.get(`/invoice/${id}`),
-  getPdf: (id, orientation = "P") =>
+  getPdf: (id, orientation = "P", companyId) =>
     apiClient.get(`/invoice/${id}/pdf`, {
-      params: { orientation },
+      params: companyId ? { orientation, companyId } : { orientation },
       responseType: "blob",
     }),
   create: (payload) => apiClient.post("/invoices", payload),

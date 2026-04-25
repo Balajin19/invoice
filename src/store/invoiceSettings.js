@@ -12,6 +12,7 @@ export const defaultInvoiceSettings = {
     currentNumber: 0,
     padLength: 3,
     terms: "",
+    financialYear: "",
   },
   loading: false,
   loaded: false,
@@ -79,6 +80,7 @@ export const fetchInvoiceSettings = (companyId) => async (dispatch) => {
       padLength:
         Number(invoiceRaw?.padLength) || defaultInvoiceSettings.data.padLength,
       terms: invoiceRaw?.terms || invoiceRaw?.termsConditions || "",
+      financialYear: invoiceRaw?.financialYear || "",
     };
 
     dispatch({
