@@ -144,6 +144,24 @@ function CustomerForm() {
     }, 100);
   };
 
+  const handleProductCreated = (createdProduct) => {
+    if (!createdProduct?.productId) {
+      return;
+    }
+
+    setProducts((prevProducts) => {
+      const exists = prevProducts.some(
+        (item) => item.productId === createdProduct.productId,
+      );
+      if (exists) {
+        return prevProducts.map((item) =>
+          item.productId === createdProduct.productId ? createdProduct : item,
+        );
+      }
+      return [...prevProducts, createdProduct];
+    });
+  };
+
   const handlePriceChange = (index, value) => {
     const updatedProducts = [...selectedProducts];
 
@@ -438,7 +456,7 @@ function CustomerForm() {
                   <thead className="table-light">
                     <tr>
                       <th>S.No</th>
-                      <th>Product</th>
+                      <th title="Product Name">Product</th>
                       <th>HSN/SAC</th>
                       <th>Unit</th>
                       <th>Rate</th>
@@ -451,7 +469,11 @@ function CustomerForm() {
                       <tr key={index}>
                         <td>{index + 1}</td>
 
-                        <td data-row={index} data-col="product">
+                        <td
+                          data-row={index}
+                          data-col="product"
+                          title={product.productName || ""}
+                        >
                           <input
                             ref={(el) => setRef(index, "product", el)}
                             type="text"
@@ -595,6 +617,7 @@ function CustomerForm() {
             show={showProductModal}
             onClose={() => setShowProductModal(false)}
             onSelect={handleProductSelect}
+            onProductCreated={handleProductCreated}
             initialSearch={productSearch}
             isEditing={isEditingProduct}
             products={[...products]}

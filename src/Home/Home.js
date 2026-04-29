@@ -52,7 +52,7 @@ function Home() {
     },
     {
       label: "Bank Account",
-      desc: "Account Number, IFSC, UPI",
+      desc: "Account Number, Bank Name, IFSC",
       done: hasBank,
       icon: "bi-bank",
     },

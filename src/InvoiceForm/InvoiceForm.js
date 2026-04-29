@@ -111,9 +111,9 @@ function InvoiceForm() {
     qty: "0.00",
     price: 0,
     discount: "0.00",
-    cgstRate: "0.00",
-    sgstRate: "0.00",
-    igstRate: "0.00",
+    cgstRate: (0).toFixed(2),
+    sgstRate: (0).toFixed(2),
+    igstRate: (0).toFixed(2),
     total: 0,
   };
   const {
@@ -152,6 +152,7 @@ function InvoiceForm() {
   const [amountInWords, setAmountInWords] = useState("Zero Rupees Only");
   const [roundedOff, setRoundedOff] = useState(0);
   const [useLoadedInvoiceTotals, setUseLoadedInvoiceTotals] = useState(false);
+  const [isGstBill, setIsGstBill] = useState(true);
 
   const [showProductModal, setShowProductModal] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
@@ -164,6 +165,7 @@ function InvoiceForm() {
   const bankListRef = useRef(bankList);
   const unitsRef = useRef([]);
   const customersRef = useRef([]);
+  const originalTaxRatesRef = useRef([]);
 
   useEffect(() => {
     companyListRef.current = companyList;
@@ -234,6 +236,7 @@ function InvoiceForm() {
           setCustomerName(invoice.customerName || "");
           setCustomerAddress(invoice.customerAddress || "");
           setGstIn(invoice.gstIn || "");
+          setIsGstBill(invoice.isGstBill !== false); // Default to true if not specified
           setSelectedProducts(
             (invoice.products || []).map((product) => ({
               ...product,
@@ -411,6 +414,53 @@ function InvoiceForm() {
     calculateTotals(selectedProducts);
   }, [selectedProducts, useLoadedInvoiceTotals, calculateTotals]);
 
+  useEffect(() => {
+    if (selectedProducts.length === 0) return;
+
+    const updatedProducts = selectedProducts.map((product, index) => {
+      if (isGstBill) {
+        // Restore original tax rates or set to defaults for GST bill
+        const originalRates = originalTaxRatesRef.current[index];
+
+        if (originalRates) {
+          return {
+            ...product,
+            cgstRate: Number(originalRates.cgstRate).toFixed(2),
+            sgstRate: Number(originalRates.sgstRate).toFixed(2),
+            igstRate: Number(originalRates.igstRate).toFixed(2),
+          };
+        }
+        // If no original rates stored, use default rates
+        return {
+          ...product,
+          cgstRate: (isInterState ? 0 : defaultCgstRate).toFixed(2),
+          sgstRate: (isInterState ? 0 : defaultSgstRate).toFixed(2),
+          igstRate: (isInterState ? defaultIgstRate : 0).toFixed(2),
+        };
+      } else {
+        // Store original rates before zeroing out
+        if (!originalTaxRatesRef.current[index]) {
+          originalTaxRatesRef.current[index] = {
+            cgstRate: Number(product.cgstRate ?? 0),
+            sgstRate: Number(product.sgstRate ?? 0),
+            igstRate: Number(product.igstRate ?? 0),
+          };
+        }
+        // Zero out all tax rates for non-GST bill
+        return {
+          ...product,
+          cgstRate: (0).toFixed(2),
+          sgstRate: (0).toFixed(2),
+          igstRate: (0).toFixed(2),
+        };
+      }
+    });
+
+    setSelectedProducts(updatedProducts);
+    setUseLoadedInvoiceTotals(false);
+    calculateTotals(updatedProducts);
+  }, [isGstBill]);
+
   const handleQtyChange = (index, value) => {
     const updatedProducts = [...selectedProducts];
     updatedProducts[index].qty = value;
@@ -499,9 +549,15 @@ function InvoiceForm() {
       qty: (1).toFixed(2),
       price,
       discount: (0).toFixed(2),
-      cgstRate: (isInterState ? 0 : defaultCgstRate).toFixed(2),
-      sgstRate: (isInterState ? 0 : defaultSgstRate).toFixed(2),
-      igstRate: (isInterState ? defaultIgstRate : 0).toFixed(2),
+      cgstRate: isGstBill
+        ? (isInterState ? 0 : defaultCgstRate).toFixed(2)
+        : (0).toFixed(2),
+      sgstRate: isGstBill
+        ? (isInterState ? 0 : defaultSgstRate).toFixed(2)
+        : (0).toFixed(2),
+      igstRate: isGstBill
+        ? (isInterState ? defaultIgstRate : 0).toFixed(2)
+        : (0).toFixed(2),
       total: price,
     };
 
@@ -517,6 +573,86 @@ function InvoiceForm() {
     setTimeout(() => {
       focusCell(selectedRowIndex, "qty");
     }, 100);
+  };
+
+  const handleProductCreated = async (createdProduct) => {
+    if (!createdProduct?.productId) {
+      return;
+    }
+
+    setProducts((prevProducts) => {
+      const exists = prevProducts.some(
+        (item) => item.productId === createdProduct.productId,
+      );
+      if (exists) {
+        return prevProducts.map((item) =>
+          item.productId === createdProduct.productId ? createdProduct : item,
+        );
+      }
+      return [...prevProducts, createdProduct];
+    });
+
+    if (!customerId) {
+      return;
+    }
+
+    const selectedCustomer = customers.find((c) => c.customerId === customerId);
+    if (!selectedCustomer) {
+      return;
+    }
+
+    const normalizedCreatedProduct = {
+      productId: createdProduct.productId,
+      productName: createdProduct.productName || "",
+      hsnSac: createdProduct.hsnSac || "",
+      unitId: createdProduct.unitId || "",
+      unit: createdProduct.unit || "",
+      price: Number(createdProduct.price || 0),
+    };
+
+    const existingCustomerProducts = Array.isArray(selectedCustomer.products)
+      ? selectedCustomer.products
+      : [];
+
+    const mergedCustomerProducts = existingCustomerProducts.some(
+      (product) => product.productId === normalizedCreatedProduct.productId,
+    )
+      ? existingCustomerProducts.map((product) =>
+          product.productId === normalizedCreatedProduct.productId
+            ? { ...product, ...normalizedCreatedProduct }
+            : product,
+        )
+      : [...existingCustomerProducts, normalizedCreatedProduct];
+
+    try {
+      await customerApi.update(customerId, {
+        customerName: selectedCustomer.customerName || customerName,
+        address: selectedCustomer.address || {
+          buildingNumber: "",
+          street: "",
+          city: "",
+          district: "",
+          state: "",
+          pincode: "",
+        },
+        gstIn: selectedCustomer.gstIn || gstIn || "",
+        products: mergedCustomerProducts,
+      });
+
+      setCustomers((prevCustomers) =>
+        prevCustomers.map((customer) =>
+          customer.customerId === customerId
+            ? { ...customer, products: mergedCustomerProducts }
+            : customer,
+        ),
+      );
+      setProducts(mergedCustomerProducts);
+    } catch (error) {
+      console.error("Failed to sync product into customer products:", error);
+      showErrorToast(
+        "Product was created, but linking it to customer failed. Please save customer once.",
+      );
+    }
   };
 
   const handleCustomerChange = (id) => {
@@ -654,6 +790,7 @@ function InvoiceForm() {
       customerName,
       customerAddress,
       gstIn,
+      isGstBill,
       products: filledProducts.map((product) => ({
         ...product,
         unit: units.find((u) => u.unitId === product.unitId)?.unitName || "",
@@ -768,6 +905,21 @@ function InvoiceForm() {
                     value={poDate}
                     onChange={(e) => setPoDate(e.target.value)}
                   />
+                </div>
+
+                <div className="col-md-6 mt-3">
+                  <div className="form-check form-switch">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="gstBillToggle"
+                      checked={isGstBill}
+                      onChange={(e) => setIsGstBill(e.target.checked)}
+                    />
+                    <label className="form-check-label" htmlFor="gstBillToggle">
+                      {isGstBill ? "GST Bill" : "Non-GST Bill"}
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1371,6 +1523,7 @@ function InvoiceForm() {
               show={showProductModal}
               onClose={() => setShowProductModal(false)}
               onSelect={handleProductSelect}
+              onProductCreated={handleProductCreated}
               initialSearch={productSearch}
               isEditing={isEditingProduct}
               products={[...products]}
