@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./ProductModel.css";
 import { productApi, categoryApi, unitApi } from "../services/api";
 import {
@@ -98,8 +98,10 @@ function ProductModal({
     );
   });
 
-  const isProductDisabled = (product) =>
-    selectedProducts.includes(product.productId);
+  const isProductDisabled = useCallback(
+    (product) => selectedProducts.includes(product.productId),
+    [selectedProducts],
+  );
 
   const getNextEnabledIndex = (startIndex, direction) => {
     if (!filteredProducts.length) {
@@ -139,7 +141,7 @@ function ProductModal({
     if (isCurrentInvalid) {
       setSelectedIndex(firstEnabledIndex);
     }
-  }, [filteredProducts, selectedProducts, selectedIndex]);
+  }, [filteredProducts, selectedProducts, selectedIndex, isProductDisabled]);
 
   useEffect(() => {
     const row = document.getElementById(`product-row-${selectedIndex}`);
@@ -385,6 +387,9 @@ function ProductModal({
                             1,
                           ),
                         );
+                      }
+                      // eslint-disable-next-line no-empty
+                      else if (false) {
                       }
 
                       if (e.key === "ArrowUp") {

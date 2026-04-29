@@ -459,7 +459,7 @@ function InvoiceForm() {
     setSelectedProducts(updatedProducts);
     setUseLoadedInvoiceTotals(false);
     calculateTotals(updatedProducts);
-  }, [isGstBill]);
+  }, [isGstBill, calculateTotals, defaultCgstRate, defaultSgstRate, defaultIgstRate, isInterState, selectedProducts]);
 
   const handleQtyChange = (index, value) => {
     const updatedProducts = [...selectedProducts];
