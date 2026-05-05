@@ -153,6 +153,7 @@ function InvoiceForm() {
   const [roundedOff, setRoundedOff] = useState(0);
   const [useLoadedInvoiceTotals, setUseLoadedInvoiceTotals] = useState(false);
   const [isGstBill, setIsGstBill] = useState(true);
+  const [runtimeInvoiceSettings, setRuntimeInvoiceSettings] = useState({});
 
   const [showProductModal, setShowProductModal] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
@@ -319,6 +320,11 @@ function InvoiceForm() {
             try {
               const res = await settingsApi.getInvoiceSettings(companyId);
               const raw = res?.data?.invoice || res?.data || {};
+              setRuntimeInvoiceSettings({
+                prefix: raw?.prefix || raw?.invoicePrefix || "",
+                padLength: Number(raw?.padLength) || undefined,
+                financialYear: raw?.financialYear || undefined,
+              });
               const startNumber = Number(raw?.startNumber) || 1;
               const currentNumber = Number(raw?.currentNumber) || 0;
               setInvoiceNumber(Math.max(startNumber, currentNumber + 1));
@@ -417,25 +423,36 @@ function InvoiceForm() {
   useEffect(() => {
     if (selectedProducts.length === 0) return;
 
+    let hasTaxRateChanges = false;
+
     const updatedProducts = selectedProducts.map((product, index) => {
       if (isGstBill) {
         // Restore original tax rates or set to defaults for GST bill
         const originalRates = originalTaxRatesRef.current[index];
 
-        if (originalRates) {
-          return {
-            ...product,
-            cgstRate: Number(originalRates.cgstRate).toFixed(2),
-            sgstRate: Number(originalRates.sgstRate).toFixed(2),
-            igstRate: Number(originalRates.igstRate).toFixed(2),
-          };
+        const nextCgstRate = originalRates
+          ? Number(originalRates.cgstRate).toFixed(2)
+          : (isInterState ? 0 : defaultCgstRate).toFixed(2);
+        const nextSgstRate = originalRates
+          ? Number(originalRates.sgstRate).toFixed(2)
+          : (isInterState ? 0 : defaultSgstRate).toFixed(2);
+        const nextIgstRate = originalRates
+          ? Number(originalRates.igstRate).toFixed(2)
+          : (isInterState ? defaultIgstRate : 0).toFixed(2);
+
+        if (
+          product.cgstRate !== nextCgstRate ||
+          product.sgstRate !== nextSgstRate ||
+          product.igstRate !== nextIgstRate
+        ) {
+          hasTaxRateChanges = true;
         }
-        // If no original rates stored, use default rates
+
         return {
           ...product,
-          cgstRate: (isInterState ? 0 : defaultCgstRate).toFixed(2),
-          sgstRate: (isInterState ? 0 : defaultSgstRate).toFixed(2),
-          igstRate: (isInterState ? defaultIgstRate : 0).toFixed(2),
+          cgstRate: nextCgstRate,
+          sgstRate: nextSgstRate,
+          igstRate: nextIgstRate,
         };
       } else {
         // Store original rates before zeroing out
@@ -446,20 +463,45 @@ function InvoiceForm() {
             igstRate: Number(product.igstRate ?? 0),
           };
         }
+
+        const nextCgstRate = (0).toFixed(2);
+        const nextSgstRate = (0).toFixed(2);
+        const nextIgstRate = (0).toFixed(2);
+
+        if (
+          product.cgstRate !== nextCgstRate ||
+          product.sgstRate !== nextSgstRate ||
+          product.igstRate !== nextIgstRate
+        ) {
+          hasTaxRateChanges = true;
+        }
+
         // Zero out all tax rates for non-GST bill
         return {
           ...product,
-          cgstRate: (0).toFixed(2),
-          sgstRate: (0).toFixed(2),
-          igstRate: (0).toFixed(2),
+          cgstRate: nextCgstRate,
+          sgstRate: nextSgstRate,
+          igstRate: nextIgstRate,
         };
       }
     });
 
+    if (!hasTaxRateChanges) {
+      return;
+    }
+
     setSelectedProducts(updatedProducts);
     setUseLoadedInvoiceTotals(false);
     calculateTotals(updatedProducts);
-  }, [isGstBill, calculateTotals, defaultCgstRate, defaultSgstRate, defaultIgstRate, isInterState, selectedProducts]);
+  }, [
+    isGstBill,
+    calculateTotals,
+    defaultCgstRate,
+    defaultSgstRate,
+    defaultIgstRate,
+    isInterState,
+    selectedProducts,
+  ]);
 
   const handleQtyChange = (index, value) => {
     const updatedProducts = [...selectedProducts];
@@ -730,9 +772,13 @@ function InvoiceForm() {
   };
 
   const currentFinancialYear = getFinancialYearLabel();
-  const formattedInvoiceNumber = formatInvoiceNumber(invoiceNumber, {
+  const effectiveInvoiceSettings = {
     ...invoiceSettings,
+    ...runtimeInvoiceSettings,
     financialYear: currentFinancialYear,
+  };
+  const formattedInvoiceNumber = formatInvoiceNumber(invoiceNumber, {
+    ...effectiveInvoiceSettings,
   });
   const termsTemplate = (invoiceSettings?.terms || "").toString().trim();
   const termsWithoutPaymentLineItems = termsTemplate
