@@ -624,11 +624,13 @@ function InvoiceForm() {
 
     setProducts((prevProducts) => {
       const exists = prevProducts.some(
-        (item) => item.productId === createdProduct.productId,
+        (item) => String(item.productId) === String(createdProduct.productId),
       );
       if (exists) {
         return prevProducts.map((item) =>
-          item.productId === createdProduct.productId ? createdProduct : item,
+          String(item.productId) === String(createdProduct.productId)
+            ? createdProduct
+            : item,
         );
       }
       return [...prevProducts, createdProduct];
@@ -638,7 +640,9 @@ function InvoiceForm() {
       return;
     }
 
-    const selectedCustomer = customers.find((c) => c.customerId === customerId);
+    const selectedCustomer = customers.find(
+      (c) => String(c.customerId) === String(customerId),
+    );
     if (!selectedCustomer) {
       return;
     }
@@ -657,10 +661,13 @@ function InvoiceForm() {
       : [];
 
     const mergedCustomerProducts = existingCustomerProducts.some(
-      (product) => product.productId === normalizedCreatedProduct.productId,
+      (product) =>
+        String(product.productId) ===
+        String(normalizedCreatedProduct.productId),
     )
       ? existingCustomerProducts.map((product) =>
-          product.productId === normalizedCreatedProduct.productId
+          String(product.productId) ===
+          String(normalizedCreatedProduct.productId)
             ? { ...product, ...normalizedCreatedProduct }
             : product,
         )
@@ -683,7 +690,7 @@ function InvoiceForm() {
 
       setCustomers((prevCustomers) =>
         prevCustomers.map((customer) =>
-          customer.customerId === customerId
+          String(customer.customerId) === String(customerId)
             ? { ...customer, products: mergedCustomerProducts }
             : customer,
         ),
@@ -698,7 +705,9 @@ function InvoiceForm() {
   };
 
   const handleCustomerChange = (id) => {
-    const selectedCustomer = customers.find((c) => c.customerId === id);
+    const selectedCustomer = customers.find(
+      (c) => String(c.customerId) === String(id),
+    );
     setCustomerId(selectedCustomer?.customerId || "");
     setCustomerName(selectedCustomer?.customerName || "");
     setCustomerState(

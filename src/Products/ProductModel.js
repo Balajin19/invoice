@@ -24,6 +24,9 @@ function ProductModal({
   const [showAddForm, setShowAddForm] = useState(false);
   const [categories, setCategories] = useState([]);
   const [units, setUnits] = useState([]);
+  const [catalogProducts, setCatalogProducts] = useState([]);
+  const [selectedExistingProductId, setSelectedExistingProductId] =
+    useState("");
   const [isPreparingAddForm, setIsPreparingAddForm] = useState(false);
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({
@@ -98,9 +101,16 @@ function ProductModal({
     );
   });
 
+  const normalizedSelectedProductIds = new Set(
+    (Array.isArray(selectedProducts) ? selectedProducts : []).map((id) =>
+      String(id || ""),
+    ),
+  );
+
   const isProductDisabled = useCallback(
-    (product) => selectedProducts.includes(product.productId),
-    [selectedProducts],
+    (product) =>
+      normalizedSelectedProductIds.has(String(product.productId || "")),
+    [normalizedSelectedProductIds],
   );
 
   const getNextEnabledIndex = (startIndex, direction) => {
@@ -163,17 +173,83 @@ function ProductModal({
         setCategories(categoriesRes.data || []);
         setUnits(unitsRes.data || []);
       }
+
+      if (customerId && !catalogProducts.length) {
+        const productsRes = await productApi.list();
+        setCatalogProducts(productsRes.data || []);
+      }
+
+      setSelectedExistingProductId("");
+      setNewProduct({
+        productName: "",
+        hsnSac: "",
+        categoryId: "",
+        unitId: "",
+        price: "",
+      });
       setShowAddForm(true);
     } catch (error) {
-      console.error("Error loading categories and units:", error);
-      showErrorToast("Unable to load categories and units.");
+      console.error("Error loading product form data:", error);
+      showErrorToast("Unable to load product form data.");
     } finally {
       setIsPreparingAddForm(false);
     }
   };
 
+  const mappedProductIds = new Set(
+    (Array.isArray(productsList) ? productsList : []).map((product) =>
+      String(product?.productId || ""),
+    ),
+  );
+
+  const unmappedCatalogProducts = (
+    Array.isArray(catalogProducts) ? catalogProducts : []
+  ).filter(
+    (product) => !mappedProductIds.has(String(product?.productId || "")),
+  );
+
+  const isUsingExistingProduct = Boolean(selectedExistingProductId);
+
+  const handleExistingProductChange = (selectedId) => {
+    setSelectedExistingProductId(selectedId);
+
+    if (!selectedId) {
+      setNewProduct((prev) => ({
+        ...prev,
+        productName: "",
+        hsnSac: "",
+        categoryId: "",
+        unitId: "",
+      }));
+      return;
+    }
+
+    const selectedProduct = unmappedCatalogProducts.find(
+      (product) => String(product.productId) === String(selectedId),
+    );
+
+    if (!selectedProduct) {
+      return;
+    }
+
+    setNewProduct((prev) => ({
+      ...prev,
+      productName: selectedProduct.productName || "",
+      hsnSac: selectedProduct.hsnSac || "",
+      categoryId: selectedProduct.categoryId || "",
+      unitId: selectedProduct.unitId || "",
+      price:
+        prev.price !== undefined && prev.price !== null && prev.price !== ""
+          ? prev.price
+          : selectedProduct.price !== undefined &&
+              selectedProduct.price !== null
+            ? String(selectedProduct.price)
+            : "",
+    }));
+  };
+
   const handleProductClick = (product) => {
-    if (selectedProducts.includes(product.productId)) {
+    if (normalizedSelectedProductIds.has(String(product.productId || ""))) {
       return;
     }
     onSelect(product);
@@ -193,6 +269,64 @@ function ProductModal({
 
     try {
       setIsCreatingProduct(true);
+
+      if (isUsingExistingProduct) {
+        const selectedExistingProduct = unmappedCatalogProducts.find(
+          (product) =>
+            String(product.productId) === String(selectedExistingProductId),
+        );
+
+        if (!selectedExistingProduct) {
+          showErrorToast("Please select an existing product");
+          return;
+        }
+
+        const selectedUnit = units.find(
+          (unitItem) =>
+            unitItem.unitId ===
+            (newProduct.unitId || selectedExistingProduct.unitId),
+        );
+
+        const mappedExistingProduct = {
+          ...selectedExistingProduct,
+          productId: selectedExistingProduct.productId,
+          productName:
+            selectedExistingProduct.productName || newProduct.productName,
+          hsnSac: selectedExistingProduct.hsnSac || newProduct.hsnSac || "",
+          categoryId:
+            selectedExistingProduct.categoryId || newProduct.categoryId || "",
+          unitId: newProduct.unitId || selectedExistingProduct.unitId || "",
+          unit:
+            selectedExistingProduct.unit ||
+            selectedUnit?.unitName ||
+            selectedExistingProduct.unitName ||
+            "",
+          price: Number(
+            newProduct.price || selectedExistingProduct.price || 0,
+          ).toFixed(2),
+        };
+
+        setProductsList((prev) => [...prev, mappedExistingProduct]);
+        if (typeof onProductCreated === "function") {
+          onProductCreated(mappedExistingProduct);
+        }
+        if (typeof onSelect === "function") {
+          onSelect(mappedExistingProduct);
+        }
+        showSuccessToast("Product added successfully!");
+
+        setSelectedExistingProductId("");
+        setNewProduct({
+          productName: "",
+          hsnSac: "",
+          categoryId: "",
+          unitId: "",
+          price: "",
+        });
+        setSearch("");
+        return;
+      }
+
       const payload = {
         productName: toUpperCaseText(newProduct.productName.trim()),
         hsnSac: newProduct.hsnSac || "",
@@ -237,11 +371,17 @@ function ProductModal({
         unitId: "",
         price: "",
       });
+      setSelectedExistingProductId("");
 
       setSearch("");
     } catch (error) {
       console.error("Error creating product:", error);
-      showErrorToast("Failed to create product. Please try again.");
+      const createErrorMessage =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        "Failed to create product. Please try again.";
+
+      showErrorToast(createErrorMessage);
     } finally {
       setIsCreatingProduct(false);
     }
@@ -262,12 +402,42 @@ function ProductModal({
           <div className="modal-body">
             {showAddForm ? (
               <div className="add-product-form">
+                {customerId && (
+                  <div className="mb-3">
+                    <label className="form-label">
+                      Select Existing Product (Not Mapped)
+                    </label>
+                    <select
+                      className="form-select"
+                      value={selectedExistingProductId}
+                      onChange={(e) =>
+                        handleExistingProductChange(e.target.value)
+                      }
+                    >
+                      <option value="">Type New Product Name</option>
+                      {unmappedCatalogProducts.map((product) => (
+                        <option
+                          key={product.productId}
+                          value={product.productId}
+                        >
+                          {product.productName}
+                        </option>
+                      ))}
+                    </select>
+                    <small className="text-muted">
+                      Pick an existing product to map it with this customer and
+                      set a customer price.
+                    </small>
+                  </div>
+                )}
+
                 <div className="mb-3">
                   <label className="form-label">Product Name *</label>
                   <input
                     type="text"
                     className="form-control"
                     value={newProduct.productName}
+                    disabled={isUsingExistingProduct}
                     onChange={(e) =>
                       setNewProduct({
                         ...newProduct,
@@ -285,6 +455,7 @@ function ProductModal({
                     type="text"
                     className="form-control"
                     value={newProduct.hsnSac}
+                    disabled={isUsingExistingProduct}
                     onChange={(e) =>
                       setNewProduct({ ...newProduct, hsnSac: e.target.value })
                     }
@@ -297,6 +468,7 @@ function ProductModal({
                   <select
                     className="form-select"
                     value={newProduct.categoryId}
+                    disabled={isUsingExistingProduct}
                     onChange={(e) =>
                       setNewProduct({
                         ...newProduct,
@@ -351,7 +523,13 @@ function ProductModal({
                     onClick={handleCreateProduct}
                     disabled={isCreatingProduct}
                   >
-                    {isCreatingProduct ? "Creating..." : "Create Product"}
+                    {isCreatingProduct
+                      ? isUsingExistingProduct
+                        ? "Adding..."
+                        : "Creating..."
+                      : isUsingExistingProduct
+                        ? "Add Product"
+                        : "Create Product"}
                   </button>
                   <button
                     className="btn btn-secondary"
