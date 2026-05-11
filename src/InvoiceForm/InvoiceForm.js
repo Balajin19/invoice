@@ -242,6 +242,7 @@ function InvoiceForm() {
             (invoice.products || []).map((product) => ({
               ...product,
               qty: Number(product.qty ?? 0).toFixed(2),
+              price: Number(product.price ?? 0).toFixed(2),
               unitId:
                 product.unitId ||
                 (unitsData || []).find(
@@ -518,6 +519,59 @@ function InvoiceForm() {
     calculateTotals(updatedProducts);
   };
 
+  const handlePriceChange = (index, value) => {
+    const updatedProducts = [...selectedProducts];
+    const normalized = String(value || "").replace(/[^0-9.]/g, "");
+
+    if (normalized === "") {
+      updatedProducts[index].price = "";
+      updatedProducts[index].total = 0;
+      setSelectedProducts(updatedProducts);
+      setUseLoadedInvoiceTotals(false);
+      calculateTotals(updatedProducts);
+      return;
+    }
+
+    if (!/^\d*\.?\d{0,2}$/.test(normalized)) {
+      return;
+    }
+
+    updatedProducts[index].price = normalized;
+    const qty = Number(updatedProducts[index].qty) || 0;
+    const price = Number(normalized) || 0;
+    const discount = Number(updatedProducts[index].discount) || 0;
+    const totalBeforeDiscount = qty * price;
+    updatedProducts[index].total = Number(
+      (totalBeforeDiscount - totalBeforeDiscount * (discount / 100)).toFixed(2),
+    );
+
+    setSelectedProducts(updatedProducts);
+    setUseLoadedInvoiceTotals(false);
+    calculateTotals(updatedProducts);
+  };
+
+  const handlePriceBlur = (index) => {
+    const updatedProducts = [...selectedProducts];
+    let price = Number(updatedProducts[index].price);
+
+    if (Number.isNaN(price) || price < 0) {
+      price = 0;
+    }
+
+    updatedProducts[index].price = price.toFixed(2);
+
+    const qty = Number(updatedProducts[index].qty) || 0;
+    const discount = Number(updatedProducts[index].discount) || 0;
+    const totalBeforeDiscount = qty * price;
+    updatedProducts[index].total = Number(
+      (totalBeforeDiscount - totalBeforeDiscount * (discount / 100)).toFixed(2),
+    );
+
+    setSelectedProducts(updatedProducts);
+    setUseLoadedInvoiceTotals(false);
+    calculateTotals(updatedProducts);
+  };
+
   const handleDiscChange = (index, value) => {
     const updatedProducts = [...selectedProducts];
     updatedProducts[index].discount = value;
@@ -589,7 +643,7 @@ function InvoiceForm() {
       unitId: product.unitId || selectedUnit?.unitId || "",
       unit: selectedUnit?.unitName || product.unit || "",
       qty: (1).toFixed(2),
-      price,
+      price: price.toFixed(2),
       discount: (0).toFixed(2),
       cgstRate: isGstBill
         ? (isInterState ? 0 : defaultCgstRate).toFixed(2)
@@ -828,6 +882,76 @@ function InvoiceForm() {
       .toFixed(2),
   );
 
+  const syncCustomerProductPrices = async (filledProducts) => {
+    if (!customerId) {
+      return;
+    }
+
+    const selectedCustomer = customers.find(
+      (customer) => String(customer.customerId) === String(customerId),
+    );
+
+    if (!selectedCustomer) {
+      return;
+    }
+
+    const existingCustomerProducts = Array.isArray(selectedCustomer.products)
+      ? selectedCustomer.products
+      : [];
+
+    const mergedProductsMap = new Map(
+      existingCustomerProducts
+        .filter((product) => product?.productId)
+        .map((product) => [String(product.productId), { ...product }]),
+    );
+
+    filledProducts.forEach((product) => {
+      if (!product?.productId) {
+        return;
+      }
+
+      const unitName =
+        units.find((u) => String(u.unitId) === String(product.unitId))
+          ?.unitName ||
+        product.unit ||
+        "";
+
+      mergedProductsMap.set(String(product.productId), {
+        productId: product.productId,
+        productName: product.productName || "",
+        hsnSac: product.hsnSac || "",
+        unitId: product.unitId || "",
+        unit: unitName,
+        price: Number(product.price) || 0,
+      });
+    });
+
+    const mergedCustomerProducts = Array.from(mergedProductsMap.values());
+
+    await customerApi.update(customerId, {
+      customerName: selectedCustomer.customerName || customerName,
+      address: selectedCustomer.address || {
+        buildingNumber: "",
+        street: "",
+        city: "",
+        district: "",
+        state: "",
+        pincode: "",
+      },
+      gstIn: selectedCustomer.gstIn || gstIn || "",
+      products: mergedCustomerProducts,
+    });
+
+    setCustomers((prevCustomers) =>
+      prevCustomers.map((customer) =>
+        String(customer.customerId) === String(customerId)
+          ? { ...customer, products: mergedCustomerProducts }
+          : customer,
+      ),
+    );
+    setProducts(mergedCustomerProducts);
+  };
+
   const saveInvoice = async () => {
     if (!validateRows()) return;
 
@@ -876,12 +1000,29 @@ function InvoiceForm() {
       } else {
         await invoiceApi.create(invoiceData);
       }
+
+      let isCustomerPriceSyncFailed = false;
+      try {
+        await syncCustomerProductPrices(filledProducts);
+      } catch (syncError) {
+        isCustomerPriceSyncFailed = true;
+        console.error("Customer product price sync failed:", syncError);
+      }
+
       showSuccessToast(
         id
           ? `Invoice ${formattedInvoiceNumber} updated successfully!`
           : `Invoice ${formattedInvoiceNumber} saved successfully!`,
         Slide,
       );
+
+      if (isCustomerPriceSyncFailed) {
+        showErrorToast(
+          "Invoice saved, but customer product prices were not synced. Please try again.",
+          Slide,
+        );
+      }
+
       navigate("/invoice-list");
     } catch (err) {
       console.error("Save error:", err);
@@ -1233,14 +1374,40 @@ function InvoiceForm() {
                               onKeyDown={(e) => {
                                 handleSequentialNavigation(e, index, "qty", {
                                   product: { col: "qty", rowOffset: 0 },
-                                  qty: { col: "discount", rowOffset: 0 },
+                                  qty: { col: "price", rowOffset: 0 },
+                                  price: { col: "discount", rowOffset: 0 },
                                   discount: { col: "product", rowOffset: 1 },
                                 });
                               }}
                             />
                           </td>
 
-                          <td>{Number(product.price || 0).toFixed(2)}</td>
+                          <td data-row={index} data-col="price">
+                            <input
+                              ref={(el) => setRef(index, "price", el)}
+                              type="text"
+                              inputMode="decimal"
+                              className="form-control"
+                              value={
+                                product.price === ""
+                                  ? ""
+                                  : String(product.price)
+                              }
+                              disabled={!product.productName}
+                              onChange={(e) =>
+                                handlePriceChange(index, e.target.value)
+                              }
+                              onBlur={() => handlePriceBlur(index)}
+                              onKeyDown={(e) => {
+                                handleSequentialNavigation(e, index, "price", {
+                                  product: { col: "qty", rowOffset: 0 },
+                                  qty: { col: "price", rowOffset: 0 },
+                                  price: { col: "discount", rowOffset: 0 },
+                                  discount: { col: "product", rowOffset: 1 },
+                                });
+                              }}
+                            />
+                          </td>
 
                           <td data-row={index} data-col="discount">
                             <input
@@ -1263,7 +1430,8 @@ function InvoiceForm() {
                                   "discount",
                                   {
                                     product: { col: "qty", rowOffset: 0 },
-                                    qty: { col: "discount", rowOffset: 0 },
+                                    qty: { col: "price", rowOffset: 0 },
+                                    price: { col: "discount", rowOffset: 0 },
                                     discount: { col: "cgstRate", rowOffset: 0 },
                                     cgstRate: { col: "sgstRate", rowOffset: 0 },
                                     sgstRate: { col: "igstRate", rowOffset: 0 },
@@ -1301,7 +1469,8 @@ function InvoiceForm() {
                                   "cgstRate",
                                   {
                                     product: { col: "qty", rowOffset: 0 },
-                                    qty: { col: "discount", rowOffset: 0 },
+                                    qty: { col: "price", rowOffset: 0 },
+                                    price: { col: "discount", rowOffset: 0 },
                                     discount: { col: "cgstRate", rowOffset: 0 },
                                     cgstRate: { col: "sgstRate", rowOffset: 0 },
                                     sgstRate: { col: "igstRate", rowOffset: 0 },
@@ -1337,7 +1506,8 @@ function InvoiceForm() {
                                   "sgstRate",
                                   {
                                     product: { col: "qty", rowOffset: 0 },
-                                    qty: { col: "discount", rowOffset: 0 },
+                                    qty: { col: "price", rowOffset: 0 },
+                                    price: { col: "discount", rowOffset: 0 },
                                     discount: { col: "cgstRate", rowOffset: 0 },
                                     cgstRate: { col: "sgstRate", rowOffset: 0 },
                                     sgstRate: { col: "igstRate", rowOffset: 0 },
@@ -1373,7 +1543,8 @@ function InvoiceForm() {
                                   "igstRate",
                                   {
                                     product: { col: "qty", rowOffset: 0 },
-                                    qty: { col: "discount", rowOffset: 0 },
+                                    qty: { col: "price", rowOffset: 0 },
+                                    price: { col: "discount", rowOffset: 0 },
                                     discount: { col: "cgstRate", rowOffset: 0 },
                                     cgstRate: { col: "sgstRate", rowOffset: 0 },
                                     sgstRate: { col: "igstRate", rowOffset: 0 },

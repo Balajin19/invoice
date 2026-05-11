@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./ProductModel.css";
 import { productApi, categoryApi, unitApi } from "../services/api";
 import {
@@ -101,10 +101,14 @@ function ProductModal({
     );
   });
 
-  const normalizedSelectedProductIds = new Set(
-    (Array.isArray(selectedProducts) ? selectedProducts : []).map((id) =>
-      String(id || ""),
-    ),
+  const normalizedSelectedProductIds = useMemo(
+    () =>
+      new Set(
+        (Array.isArray(selectedProducts) ? selectedProducts : []).map((id) =>
+          String(id || ""),
+        ),
+      ),
+    [selectedProducts],
   );
 
   const isProductDisabled = useCallback(
