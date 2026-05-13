@@ -166,8 +166,10 @@ function InvoiceForm() {
   const bankListRef = useRef(bankList);
   const unitsRef = useRef([]);
   const customersRef = useRef([]);
+  const selectedProductsRef = useRef(selectedProducts);
   const originalTaxRatesRef = useRef([]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     companyListRef.current = companyList;
   }, [companyList]);
@@ -183,6 +185,10 @@ function InvoiceForm() {
   useEffect(() => {
     customersRef.current = customers;
   }, [customers]);
+
+  useEffect(() => {
+    selectedProductsRef.current = selectedProducts;
+  }, [selectedProducts]);
 
   useEffect(() => {
     const loadInvoiceForm = async () => {
@@ -422,11 +428,13 @@ function InvoiceForm() {
   }, [selectedProducts, useLoadedInvoiceTotals, calculateTotals]);
 
   useEffect(() => {
-    if (selectedProducts.length === 0) return;
+    const currentSelectedProducts = selectedProductsRef.current;
+
+    if (currentSelectedProducts.length === 0) return;
 
     let hasTaxRateChanges = false;
 
-    const updatedProducts = selectedProducts.map((product, index) => {
+    const updatedProducts = currentSelectedProducts.map((product, index) => {
       if (isGstBill) {
         // Restore original tax rates or set to defaults for GST bill
         const originalRates = originalTaxRatesRef.current[index];
