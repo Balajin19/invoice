@@ -501,7 +501,6 @@ function InvoiceForm() {
     defaultSgstRate,
     defaultIgstRate,
     isInterState,
-    selectedProducts,
   ]);
 
   const handleQtyChange = (index, value) => {
