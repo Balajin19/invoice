@@ -10,6 +10,7 @@ import {
   showErrorToast,
   showSuccessToast,
   toUpperCaseText,
+  INDIAN_STATES,
 } from "../utils/helpers";
 import "./Settings.css";
 
@@ -684,12 +685,19 @@ function Settings() {
             </div>
             <div className="col-md-6 mt-3">
               <label>State</label>
-              <input
-                className="form-control"
+              <select
+                className="form-select"
                 name="state"
                 value={company.state || ""}
                 onChange={handleCompanyChange}
-              />
+              >
+                <option value="">Select State</option>
+                {INDIAN_STATES.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="col-md-6 mt-3">
               <label>Pincode</label>

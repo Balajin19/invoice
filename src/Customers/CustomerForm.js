@@ -8,6 +8,7 @@ import {
   showErrorToast,
   showSuccessToast,
   toUpperCaseText,
+  INDIAN_STATES,
 } from "../utils/helpers";
 
 function CustomerForm() {
@@ -201,7 +202,12 @@ function CustomerForm() {
       showErrorToast("Please enter Customer Name");
       return false;
     }
-    if (!address.city || !address.district || !address.pincode) {
+    if (
+      !address.city ||
+      !address.district ||
+      !address.state ||
+      !address.pincode
+    ) {
       showErrorToast("City, District, State and Pincode are required");
       return false;
     }
@@ -415,9 +421,8 @@ function CustomerForm() {
                 })
               }
             />
-            <input
-              className="form-control mb-2"
-              placeholder="State"
+            <select
+              className="form-select mb-2"
               value={address.state}
               onChange={(e) =>
                 setAddress({
@@ -425,7 +430,14 @@ function CustomerForm() {
                   state: toUpperCaseText(e.target.value),
                 })
               }
-            />
+            >
+              <option value="">Select State</option>
+              {INDIAN_STATES.map((state) => (
+                <option key={state} value={state}>
+                  {state}
+                </option>
+              ))}
+            </select>
 
             <input
               className="form-control mb-2"

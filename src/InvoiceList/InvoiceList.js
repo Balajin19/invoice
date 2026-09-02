@@ -7,6 +7,7 @@ import "./InvoiceList.css";
 import {
   confirmAndHandleDelete,
   formatInvoiceNumber,
+  getFinancialYearLabel,
   showErrorToast,
 } from "../utils/helpers";
 
@@ -15,6 +16,9 @@ function InvoiceList() {
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(true);
   const [hasInvoicesLoadError, setHasInvoicesLoadError] = useState(false);
   const [search, setSearch] = useState("");
+  const currentFinancialYear = getFinancialYearLabel();
+  const [selectedFinancialYear, setSelectedFinancialYear] =
+    useState(currentFinancialYear);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [printOrientation, setPrintOrientation] = useState("P");
   const [invoiceToPrint, setInvoiceToPrint] = useState(null);
@@ -29,6 +33,27 @@ function InvoiceList() {
   );
 
   const isInvoiceActive = (invoice) => invoice?.isActive === true;
+
+  // Extract unique financial years from invoices (always include current FY)
+  const getUniqueFinancialYears = () => {
+    const years = new Set();
+    // Always include current financial year
+    years.add(currentFinancialYear);
+    // Add years from invoices
+    invoices.forEach((invoice) => {
+      if (invoice.invoiceDate) {
+        const year = getFinancialYearLabel(invoice.invoiceDate);
+        years.add(year);
+      }
+    });
+    return Array.from(years).sort().reverse();
+  };
+
+  const financialYears = getUniqueFinancialYears();
+  const formatFinancialYearOption = (financialYear) => {
+    const [startYear, endYear] = financialYear.split("-");
+    return `20${startYear}-20${endYear}`;
+  };
 
   const fetchInvoices = useCallback(async () => {
     setIsLoadingInvoices(true);
@@ -140,6 +165,15 @@ function InvoiceList() {
   };
 
   const filteredInvoices = invoices.filter((invoice) => {
+    // Filter by financial year
+    if (selectedFinancialYear) {
+      const invoiceFinancialYear = getFinancialYearLabel(invoice.invoiceDate);
+      if (invoiceFinancialYear !== selectedFinancialYear) {
+        return false;
+      }
+    }
+
+    // Filter by search term
     if (!search.trim()) return true;
     const q = search.trim().toLowerCase();
     const formattedNum = formatInvoiceNumber(
@@ -157,15 +191,33 @@ function InvoiceList() {
     <div className="container mt-4 mb-4">
       <h2 className="mb-4">Invoice List</h2>
       {!isLoadingInvoices && !hasInvoicesLoadError && invoices.length > 0 && (
-        <div className="mb-3 invoice-search-container">
-          <input
-            ref={searchInputRef}
-            type="text"
-            className="form-control invoice-search-input"
-            placeholder="Search by customer name or invoice number..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <div className="mb-3">
+          <div className="row g-2">
+            <div className="col-md-8">
+              <input
+                ref={searchInputRef}
+                type="text"
+                className="form-control invoice-search-input"
+                placeholder="Search by customer name or invoice number..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="col-md-4">
+              <select
+                className="form-select invoice-financial-year-select"
+                value={selectedFinancialYear}
+                onChange={(e) => setSelectedFinancialYear(e.target.value)}
+              >
+                <option value="">All Financial Years</option>
+                {financialYears.map((year) => (
+                  <option key={year} value={year}>
+                    {formatFinancialYearOption(year)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
       )}
       {!isLoadingInvoices &&

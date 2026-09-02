@@ -5,12 +5,22 @@
   padding: 12px;
 }
 
-.invoice-search-input {
+.invoice-search-input,
+.invoice-financial-year-select {
   background: #ffffff;
   border-color: #cfdff2;
 }
 
-.invoice-search-input:focus {
+.invoice-financial-year-select {
+  margin-top: 5px;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3e%3cpath d='m6 9 6 6 6-6'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+}
+
+.invoice-search-input:focus,
+.invoice-financial-year-select:focus {
   border-color: #6ea8fe;
   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
 }

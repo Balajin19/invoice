@@ -102,7 +102,21 @@ function InvoiceForm() {
   const defaultIgstRate =
     Number(companySettings?.igstRate ?? companySettings?.igst) || 0;
 
-  const emptyRow = {
+  // Calculate normalized state names early
+  const normalizeStateName = (value = "") =>
+    String(value)
+      .replace(/[\u200B-\u200D\uFEFF]/g, "")
+      .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, " ")
+      .replace(/[^a-zA-Z0-9\s]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+
+  const normalizedSellerState = normalizeStateName(sellerState);
+
+  // Determine if it's inter-state (will be updated when customer is selected)
+  // For now, we'll assume it could be either (this will be re-calculated when customer changes)
+  const getEmptyRow = (isInterState = false) => ({
     productId: "",
     productName: "",
     hsnSac: "",
@@ -115,7 +129,10 @@ function InvoiceForm() {
     sgstRate: (0).toFixed(2),
     igstRate: (0).toFixed(2),
     total: 0,
-  };
+  });
+
+  const emptyRow = getEmptyRow();
+
   const {
     setRef,
     focusCell,
@@ -244,28 +261,39 @@ function InvoiceForm() {
           setCustomerAddress(invoice.customerAddress || "");
           setGstIn(invoice.gstIn || "");
           setIsGstBill(invoice.isGstBill !== false); // Default to true if not specified
-          setSelectedProducts(
-            (invoice.products || []).map((product) => ({
-              ...product,
-              qty: Number(product.qty ?? 0).toFixed(2),
-              price: Number(product.price ?? 0).toFixed(2),
-              unitId:
-                product.unitId ||
-                (unitsData || []).find(
-                  (unitItem) => unitItem.unitName === product.unit,
-                )?.unitId ||
-                "",
-              discount: Number(
-                (product.discount ?? product.discPercent) || 0,
-              ).toFixed(2),
-              cgstRate: Number(product.cgstRate ?? 0).toFixed(2),
-              sgstRate: Number(product.sgstRate ?? 0).toFixed(2),
-              igstRate: Number(product.igstRate ?? 0).toFixed(2),
-              total:
-                Number(product.total) ||
-                Number(product.qty || 0) * Number(product.price || 0),
-            })),
-          );
+
+          // Load products and store original tax rates for each row
+          const loadedProducts = (invoice.products || []).map((product) => ({
+            ...product,
+            qty: Number(product.qty ?? 0).toFixed(2),
+            price: Number(product.price ?? 0).toFixed(2),
+            unitId:
+              product.unitId ||
+              (unitsData || []).find(
+                (unitItem) => unitItem.unitName === product.unit,
+              )?.unitId ||
+              "",
+            discount: Number(
+              (product.discount ?? product.discPercent) || 0,
+            ).toFixed(2),
+            cgstRate: Number(product.cgstRate ?? 0).toFixed(2),
+            sgstRate: Number(product.sgstRate ?? 0).toFixed(2),
+            igstRate: Number(product.igstRate ?? 0).toFixed(2),
+            total:
+              Number(product.total) ||
+              Number(product.qty || 0) * Number(product.price || 0),
+          }));
+
+          // Store original tax rates for each product row
+          loadedProducts.forEach((product, index) => {
+            originalTaxRatesRef.current[index] = {
+              cgstRate: Number(product.cgstRate ?? 0),
+              sgstRate: Number(product.sgstRate ?? 0),
+              igstRate: Number(product.igstRate ?? 0),
+            };
+          });
+
+          setSelectedProducts(loadedProducts);
           setSubTotal(Number(invoice.subTotal) || 0);
           setCgst(Number(invoice.cgst) || 0);
           setSgst(Number(invoice.sgst) || 0);
@@ -330,6 +358,7 @@ function InvoiceForm() {
               setRuntimeInvoiceSettings({
                 prefix: raw?.prefix || raw?.invoicePrefix || "",
                 padLength: Number(raw?.padLength) || undefined,
+                terms: raw?.terms || raw?.termsConditions || "",
                 financialYear: raw?.financialYear || undefined,
               });
               const startNumber = Number(raw?.startNumber) || 1;
@@ -357,17 +386,8 @@ function InvoiceForm() {
     loadInvoiceForm();
   }, [id, dispatch]);
 
-  const normalizeStateName = (value = "") =>
-    String(value)
-      .replace(/[\u200B-\u200D\uFEFF]/g, "")
-      .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, " ")
-      .replace(/[^a-zA-Z0-9\s]/g, "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .toLowerCase();
-
+  // Calculate derived state for inter-state check
   const normalizedCustomerState = normalizeStateName(customerState);
-  const normalizedSellerState = normalizeStateName(sellerState);
 
   const isInterState =
     Boolean(normalizedCustomerState) &&
@@ -428,15 +448,13 @@ function InvoiceForm() {
   }, [selectedProducts, useLoadedInvoiceTotals, calculateTotals]);
 
   useEffect(() => {
-    const currentSelectedProducts = selectedProductsRef.current;
-
-    if (currentSelectedProducts.length === 0) return;
+    // Handle GST bill toggle - update tax rates and recalculate totals
+    if (selectedProducts.length === 0) return;
 
     let hasTaxRateChanges = false;
-
-    const updatedProducts = currentSelectedProducts.map((product, index) => {
+    const updatedProducts = selectedProducts.map((product, index) => {
       if (isGstBill) {
-        // Restore original tax rates or set to defaults for GST bill
+        // GST is ON - restore original rates or use defaults
         const originalRates = originalTaxRatesRef.current[index];
 
         const nextCgstRate = originalRates
@@ -464,7 +482,7 @@ function InvoiceForm() {
           igstRate: nextIgstRate,
         };
       } else {
-        // Store original rates before zeroing out
+        // GST is OFF - store original rates and zero out all tax rates
         if (!originalTaxRatesRef.current[index]) {
           originalTaxRatesRef.current[index] = {
             cgstRate: Number(product.cgstRate ?? 0),
@@ -499,16 +517,72 @@ function InvoiceForm() {
       return;
     }
 
+    // Update products with new tax rates and recalculate totals
     setSelectedProducts(updatedProducts);
     setUseLoadedInvoiceTotals(false);
     calculateTotals(updatedProducts);
   }, [
     isGstBill,
+    selectedProducts,
     calculateTotals,
     defaultCgstRate,
     defaultSgstRate,
     defaultIgstRate,
     isInterState,
+  ]);
+
+  // Ensure first empty row has correct tax rates when GST bill setting changes
+  useEffect(() => {
+    if (!id && selectedProducts.length === 1) {
+      // This is a new invoice with just the empty row
+      const emptyProduct = selectedProducts[0];
+
+      // Check if the empty row needs tax rate updates
+      const currentCgstRate = Number(emptyProduct.cgstRate);
+      const currentSgstRate = Number(emptyProduct.sgstRate);
+      const currentIgstRate = Number(emptyProduct.igstRate);
+
+      let needsUpdate = false;
+      let newCgstRate, newSgstRate, newIgstRate;
+
+      if (isGstBill) {
+        newCgstRate = (isInterState ? 0 : defaultCgstRate).toFixed(2);
+        newSgstRate = (isInterState ? 0 : defaultSgstRate).toFixed(2);
+        newIgstRate = (isInterState ? defaultIgstRate : 0).toFixed(2);
+      } else {
+        newCgstRate = (0).toFixed(2);
+        newSgstRate = (0).toFixed(2);
+        newIgstRate = (0).toFixed(2);
+      }
+
+      if (
+        currentCgstRate !== Number(newCgstRate) ||
+        currentSgstRate !== Number(newSgstRate) ||
+        currentIgstRate !== Number(newIgstRate)
+      ) {
+        needsUpdate = true;
+      }
+
+      if (needsUpdate) {
+        const updatedProducts = [
+          {
+            ...emptyProduct,
+            cgstRate: newCgstRate,
+            sgstRate: newSgstRate,
+            igstRate: newIgstRate,
+          },
+        ];
+        setSelectedProducts(updatedProducts);
+      }
+    }
+  }, [
+    isGstBill,
+    isInterState,
+    defaultCgstRate,
+    defaultSgstRate,
+    defaultIgstRate,
+    id,
+    selectedProducts,
   ]);
 
   const handleQtyChange = (index, value) => {
