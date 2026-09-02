@@ -450,10 +450,11 @@ function InvoiceForm() {
 
   useEffect(() => {
     // Handle GST bill toggle - update tax rates and recalculate totals
-    if (selectedProducts.length === 0) return;
+    const currentProducts = selectedProductsRef.current;
+    if (currentProducts.length === 0) return;
 
     let hasTaxRateChanges = false;
-    const updatedProducts = selectedProducts.map((product, index) => {
+    const updatedProducts = currentProducts.map((product, index) => {
       if (isGstBill) {
         // GST is ON - restore original rates or use defaults
         const originalRates = originalTaxRatesRef.current[index];
@@ -484,7 +485,11 @@ function InvoiceForm() {
         };
       } else {
         // GST is OFF - store original rates and zero out all tax rates
-        if (!originalTaxRatesRef.current[index]) {
+        if (
+          Number(product.cgstRate) !== 0 ||
+          Number(product.sgstRate) !== 0 ||
+          Number(product.igstRate) !== 0
+        ) {
           originalTaxRatesRef.current[index] = {
             cgstRate: Number(product.cgstRate ?? 0),
             sgstRate: Number(product.sgstRate ?? 0),
@@ -524,7 +529,6 @@ function InvoiceForm() {
     calculateTotals(updatedProducts);
   }, [
     isGstBill,
-    selectedProducts,
     calculateTotals,
     defaultCgstRate,
     defaultSgstRate,
@@ -672,6 +676,12 @@ function InvoiceForm() {
   const handleTaxRateChange = (index, field, value) => {
     const updatedProducts = [...selectedProducts];
     updatedProducts[index][field] = value;
+    if (isGstBill) {
+      originalTaxRatesRef.current[index] = {
+        ...(originalTaxRatesRef.current[index] || {}),
+        [field]: Number(value) || 0,
+      };
+    }
     setSelectedProducts(updatedProducts);
     setUseLoadedInvoiceTotals(false);
     calculateTotals(updatedProducts);
@@ -925,7 +935,15 @@ function InvoiceForm() {
   const formattedInvoiceNumber = formatInvoiceNumber(invoiceNumber, {
     ...effectiveInvoiceSettings,
   });
-  const termsTemplate = (invoiceSettings?.terms || "").toString().trim();
+  const termsTemplate = (
+    effectiveInvoiceSettings?.terms ||
+    effectiveInvoiceSettings?.termsConditions ||
+    invoiceSettings?.terms ||
+    invoiceSettings?.termsConditions ||
+    ""
+  )
+    .toString()
+    .trim();
   const termsWithoutPaymentLineItems = termsTemplate
     .split("\n")
     .map((line) => line.trim())
@@ -1534,7 +1552,7 @@ function InvoiceForm() {
                               inputMode="decimal"
                               className="form-control"
                               value={product.cgstRate ?? "0.00"}
-                              disabled={!product.productName}
+                              disabled={!product.productName || !isGstBill}
                               onChange={(e) =>
                                 handleTaxRateChange(
                                   index,
@@ -1571,7 +1589,7 @@ function InvoiceForm() {
                               inputMode="decimal"
                               className="form-control"
                               value={product.sgstRate ?? "0.00"}
-                              disabled={!product.productName}
+                              disabled={!product.productName || !isGstBill}
                               onChange={(e) =>
                                 handleTaxRateChange(
                                   index,
@@ -1608,7 +1626,7 @@ function InvoiceForm() {
                               inputMode="decimal"
                               className="form-control"
                               value={product.igstRate ?? "0.00"}
-                              disabled={!product.productName}
+                              disabled={!product.productName || !isGstBill}
                               onChange={(e) =>
                                 handleTaxRateChange(
                                   index,
