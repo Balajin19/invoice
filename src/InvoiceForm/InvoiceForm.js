@@ -14,6 +14,7 @@ import {
   getFinancialYearLabel,
   getPaymentTermDays,
   formatAddress,
+  getCustomerLocation,
   numberToWords,
   showErrorToast,
   showSuccessToast,
@@ -1262,7 +1263,8 @@ function InvoiceForm() {
                       key={customer.customerId}
                       value={customer.customerId}
                     >
-                      {customer.customerName} - {customer.address?.city || ""}
+                      {customer.customerName} -{" "}
+                      {getCustomerLocation(customer.address)}
                     </option>
                   ))}
                 </select>

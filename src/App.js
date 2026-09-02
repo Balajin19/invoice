@@ -9,6 +9,7 @@ import ForgotPassword from "./Login/ForgotPassword";
 import Home from "./Home/Home";
 import InvoiceForm from "./InvoiceForm/InvoiceForm";
 import InvoiceList from "./InvoiceList/InvoiceList";
+import Sales from "./Sales/Sales";
 import Categories from "./Categories/Categories";
 import CategoryForm from "./Categories/CategoryForm";
 import Products from "./Products/Products";
@@ -39,6 +40,7 @@ const getPageTitle = (pathname) => {
     return "Invoice";
   }
   if (pathname === "/invoice-list") return "Invoice List";
+  if (pathname === "/sales") return "Sales Summary";
   if (pathname === "/invoice-print") return "Invoice Print";
   if (pathname === "/create-category") return "Category";
   if (pathname === "/categories") return "Categories";
@@ -163,6 +165,7 @@ function App() {
             <Route path="/create-invoice" element={<InvoiceForm />} />
             <Route path="/invoice/:id" element={<InvoiceForm />} />
             <Route path="/invoice-list" element={<InvoiceList />} />
+            <Route path="/sales" element={<Sales />} />
             <Route path="/invoice-print" element={<InvoicePrint />} />
             <Route path="/create-product" element={<ProductForm />} />
             <Route path="/create-category" element={<CategoryForm />} />

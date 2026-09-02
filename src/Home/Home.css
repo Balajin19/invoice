@@ -182,6 +182,9 @@
 .red {
   background: linear-gradient(135deg, #ff416c, #ff4b2b);
 }
+.purple {
+  background: linear-gradient(135deg, #7c3aed, #c084fc);
+}
 .navy {
   background: linear-gradient(135deg, #1d3557, #457b9d);
 }

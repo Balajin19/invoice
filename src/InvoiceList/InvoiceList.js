@@ -60,9 +60,15 @@ function InvoiceList() {
 
     try {
       const res = await invoiceApi.list(activeCompanyId || undefined);
-      setInvoices(
-        Array.isArray(res?.data) ? res.data.filter(isInvoiceActive) : [],
+      const activeInvoices = Array.isArray(res?.data)
+        ? res.data.filter(isInvoiceActive)
+        : [];
+      activeInvoices.sort(
+        (firstInvoice, secondInvoice) =>
+          Number(firstInvoice.invoiceNumber) -
+          Number(secondInvoice.invoiceNumber),
       );
+      setInvoices(activeInvoices);
       setHasInvoicesLoadError(false);
     } catch (error) {
       console.error("Error loading invoices:", error);

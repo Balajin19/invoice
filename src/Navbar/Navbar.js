@@ -109,6 +109,9 @@ function Navbar() {
             <Link className={isActive("/customers")} to="/customers">
               Customers
             </Link>
+            <Link className={isActive("/sales")} to="/sales">
+              Sales
+            </Link>
           </div>
 
           <div className="user-menu" ref={dropdownRef}>

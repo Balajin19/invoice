@@ -117,6 +117,13 @@ function Home() {
       btn: "Manage",
     },
     {
+      title: "Sales",
+      icon: "bi-graph-up-arrow",
+      color: "purple",
+      path: "/sales",
+      btn: "View",
+    },
+    {
       title: "Profile",
       icon: "bi-person-circle",
       color: "navy",

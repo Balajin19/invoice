@@ -76,6 +76,19 @@ export const formatAddress = (address = {}) => {
     : formattedAddress;
 };
 
+export const getCustomerLocation = (address = {}) => {
+  if (typeof address === "object" && address !== null) {
+    return address.city || "";
+  }
+
+  const addressParts = String(address)
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return addressParts[2] || "";
+};
+
 export const toUpperCaseText = (value = "") => value.toString().toUpperCase();
 
 export const toTitleCaseText = (value = "") =>
