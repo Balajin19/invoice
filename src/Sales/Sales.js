@@ -27,19 +27,17 @@ import {
 
 import "./Sales.css";
 
-/* =========================================================
-   CONSTANTS
-========================================================= */
-
 const TAX_COLORS = {
   CGST: "#6366f1",
   SGST: "#10b981",
   IGST: "#f59e0b",
 };
 
-/* =========================================================
-   FORMATTING HELPERS
-========================================================= */
+const INVOICES_PER_PAGE = 10;
+
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                                    */
+/* -------------------------------------------------------------------------- */
 
 const formatCurrency = (value) => {
   const amount = Number(value) || 0;
@@ -69,61 +67,25 @@ const formatCompactCurrency = (value) => {
   return `₹${amount.toFixed(0)}`;
 };
 
-const formatDate = (dateValue) => {
-  if (!dateValue) {
-    return "-";
-  }
-
-  const normalized = normalizeInvoiceDate(dateValue);
-
-  if (!normalized) {
-    return "-";
-  }
-
-  const [year, month, day] = normalized.split("-");
-
-  return `${day}/${month}/${year}`;
-};
-
-/* =========================================================
-   DATE HELPERS
-========================================================= */
-
-/*
- * Converts invoice dates into YYYY-MM-DD.
- *
- * Supports:
- * YYYY-MM-DD
- * YYYY-MM-DDTHH:mm:ssZ
- * DD/MM/YYYY
- * DD-MM-YYYY
- */
 const normalizeInvoiceDate = (value) => {
-  if (!value) {
-    return "";
-  }
+  if (!value) return "";
 
   const raw = String(value).trim();
 
-  if (!raw) {
-    return "";
-  }
+  if (!raw) return "";
 
-  /* YYYY-MM-DD / ISO */
   const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
 
   if (isoMatch) {
     return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
   }
 
-  /* DD/MM/YYYY */
   const slashMatch = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
 
   if (slashMatch) {
     return `${slashMatch[3]}-${slashMatch[2]}-${slashMatch[1]}`;
   }
 
-  /* DD-MM-YYYY */
   const dashMatch = raw.match(/^(\d{2})-(\d{2})-(\d{4})/);
 
   if (dashMatch) {
@@ -133,12 +95,22 @@ const normalizeInvoiceDate = (value) => {
   return "";
 };
 
+const formatDate = (dateValue) => {
+  if (!dateValue) return "-";
+
+  const normalized = normalizeInvoiceDate(dateValue);
+
+  if (!normalized) return "-";
+
+  const [year, month, day] = normalized.split("-");
+
+  return `${day}/${month}/${year}`;
+};
+
 const getDateParts = (dateValue) => {
   const normalized = normalizeInvoiceDate(dateValue);
 
-  if (!normalized) {
-    return null;
-  }
+  if (!normalized) return null;
 
   const [year, month, day] = normalized.split("-").map(Number);
 
@@ -161,16 +133,10 @@ const getDateParts = (dateValue) => {
   };
 };
 
-/* =========================================================
-   FINANCIAL YEAR HELPERS
-========================================================= */
-
 const getFinancialYearFromDate = (dateValue) => {
   const parts = getDateParts(dateValue);
 
-  if (!parts) {
-    return null;
-  }
+  if (!parts) return null;
 
   const startYear = parts.month >= 4 ? parts.year : parts.year - 1;
 
@@ -180,9 +146,7 @@ const getFinancialYearFromDate = (dateValue) => {
 };
 
 const formatFinancialYear = (financialYear) => {
-  if (!financialYear) {
-    return "";
-  }
+  if (!financialYear) return "";
 
   const [start, end] = String(financialYear).split("-");
 
@@ -200,9 +164,7 @@ const formatFinancialYear = (financialYear) => {
 };
 
 const normalizeFinancialYear = (financialYear) => {
-  if (!financialYear) {
-    return "";
-  }
+  if (!financialYear) return "";
 
   const value = String(financialYear);
 
@@ -252,85 +214,56 @@ const getFinancialYearDateRange = (financialYear) => {
   };
 };
 
-/* =========================================================
-   INVOICE HELPERS
-========================================================= */
-
-const getInvoiceCustomerId = (invoice) => {
-  return String(
+const getInvoiceCustomerId = (invoice) =>
+  String(
     invoice?.customerId ||
       invoice?.customer_id ||
       invoice?.customer?.id ||
       invoice?.customer?._id ||
       "",
   );
-};
 
-const getInvoiceCustomerName = (invoice) => {
-  return (
-    invoice?.customerName ||
-    invoice?.customer_name ||
-    invoice?.customer?.name ||
-    invoice?.customer?.companyName ||
-    invoice?.companyName ||
-    invoice?.company?.name ||
-    "Unknown Customer"
-  );
-};
+const getInvoiceCustomerName = (invoice) =>
+  invoice?.customerName ||
+  invoice?.customer_name ||
+  invoice?.customer?.name ||
+  invoice?.customer?.companyName ||
+  invoice?.companyName ||
+  invoice?.company?.name ||
+  "Unknown Customer";
 
-const getInvoiceNumber = (invoice) => {
-  return (
-    invoice?.invoiceNumber ||
-    invoice?.invoice_number ||
-    invoice?.invoiceNo ||
-    invoice?.invoice_no ||
-    invoice?.number ||
-    invoice?.invoiceId ||
-    "-"
-  );
-};
+const getInvoiceNumber = (invoice) =>
+  invoice?.invoiceNumber ||
+  invoice?.invoice_number ||
+  invoice?.invoiceNo ||
+  invoice?.invoice_no ||
+  invoice?.number ||
+  invoice?.invoiceId ||
+  "-";
 
-const getInvoiceDate = (invoice) => {
-  return (
-    invoice?.invoiceDate ||
-    invoice?.invoice_date ||
-    invoice?.date ||
-    invoice?.createdAt ||
-    invoice?.created_at ||
-    ""
-  );
-};
-
-/* =========================================================
-   INVOICE EDIT ROUTE
-========================================================= */
+const getInvoiceDate = (invoice) =>
+  invoice?.invoiceDate ||
+  invoice?.invoice_date ||
+  invoice?.date ||
+  invoice?.createdAt ||
+  invoice?.created_at ||
+  "";
 
 const getInvoiceEditPath = (invoice) => {
   const invoiceId =
     invoice?.invoiceId || invoice?.id || invoice?._id || invoice?.invoice_id;
 
-  if (!invoiceId) {
-    return null;
-  }
+  if (!invoiceId) return null;
 
   return `/invoice/${invoiceId}`;
 };
 
-/* =========================================================
-   MONTH BUCKETS
-========================================================= */
-
 const getMonthBuckets = (startDate, endDate, showYear = false) => {
-  if (!startDate || !endDate) {
-    return [];
-  }
+  if (!startDate || !endDate) return [];
 
-  if (startDate > endDate) {
-    return [];
-  }
+  if (startDate > endDate) return [];
 
   const startParts = getDateParts(startDate);
-
   const endParts = getDateParts(endDate);
 
   if (!startParts || !endParts) {
@@ -376,63 +309,51 @@ const getMonthBuckets = (startDate, endDate, showYear = false) => {
   return buckets;
 };
 
-/* =========================================================
-   TOOLTIP - SALES
-========================================================= */
+/* -------------------------------------------------------------------------- */
+/* Tooltips                                                                   */
+/* -------------------------------------------------------------------------- */
 
 const SalesTooltip = ({ active, payload, label }) => {
-  if (!active || !payload || !payload.length) {
+  if (!active || !payload?.length) {
     return null;
   }
 
-  const sales = payload.find((item) => item.dataKey === "sales");
+  const sales = payload.find((item) => item.dataKey === "sales")?.value;
 
   return (
     <div className="sales-chart-tooltip">
-      <div className="tooltip-label">{label}</div>
-
-      <div className="tooltip-value">
-        <span>Sales</span>
-
-        <strong>{formatCurrency(sales?.value || 0)}</strong>
-      </div>
+      <span>{label}</span>
+      <strong>{formatCurrency(sales)}</strong>
     </div>
   );
 };
-
-/* =========================================================
-   TOOLTIP - INVOICES
-========================================================= */
 
 const InvoiceTooltip = ({ active, payload, label }) => {
-  if (!active || !payload || !payload.length) {
+  if (!active || !payload?.length) {
     return null;
   }
 
+  const invoices = payload.find((item) => item.dataKey === "invoices")?.value;
+
   return (
     <div className="sales-chart-tooltip">
-      <div className="tooltip-label">{label}</div>
-
-      <div className="tooltip-value">
-        <span>Invoices</span>
-
-        <strong>{payload[0]?.value || 0}</strong>
-      </div>
+      <span>{label}</span>
+      <strong>
+        {invoices} {invoices === 1 ? "Invoice" : "Invoices"}
+      </strong>
     </div>
   );
 };
 
-/* =========================================================
-   COMPONENT
-========================================================= */
+/* -------------------------------------------------------------------------- */
+/* Component                                                                  */
+/* -------------------------------------------------------------------------- */
 
 const Sales = () => {
   const navigate = useNavigate();
 
   const [invoices, setInvoices] = useState([]);
-
   const [isLoading, setIsLoading] = useState(true);
-
   const [hasLoadError, setHasLoadError] = useState(false);
 
   const [selectedFinancialYear, setSelectedFinancialYear] = useState("");
@@ -445,9 +366,11 @@ const Sales = () => {
 
   const [invoiceSearch, setInvoiceSearch] = useState("");
 
-  /* =======================================================
-     COMPANY
-  ======================================================= */
+  const [invoicePage, setInvoicePage] = useState(1);
+
+  /* ------------------------------------------------------------------------ */
+  /* Company                                                                  */
+  /* ------------------------------------------------------------------------ */
 
   const companyList = useSelector((state) => state.companies?.data || []);
 
@@ -457,9 +380,9 @@ const Sales = () => {
       "",
   );
 
-  /* =======================================================
-     FETCH INVOICES
-  ======================================================= */
+  /* ------------------------------------------------------------------------ */
+  /* Fetch invoices                                                           */
+  /* ------------------------------------------------------------------------ */
 
   const fetchInvoices = useCallback(async () => {
     setIsLoading(true);
@@ -467,17 +390,6 @@ const Sales = () => {
     try {
       const response = await invoiceApi.list(activeCompanyId || undefined);
 
-      /*
-       * Your API response may be:
-       *
-       * {
-       *   data: [...]
-       * }
-       *
-       * or directly:
-       *
-       * [...]
-       */
       const responseData = Array.isArray(response?.data)
         ? response.data
         : Array.isArray(response)
@@ -491,6 +403,7 @@ const Sales = () => {
       const sortedInvoices = [...activeInvoices].sort(
         (firstInvoice, secondInvoice) => {
           const firstNumber = Number(getInvoiceNumber(firstInvoice));
+
           const secondNumber = Number(getInvoiceNumber(secondInvoice));
 
           if (Number.isFinite(firstNumber) && Number.isFinite(secondNumber)) {
@@ -500,13 +413,15 @@ const Sales = () => {
           return String(getInvoiceNumber(firstInvoice)).localeCompare(
             String(getInvoiceNumber(secondInvoice)),
             undefined,
-            { numeric: true, sensitivity: "base" },
+            {
+              numeric: true,
+              sensitivity: "base",
+            },
           );
         },
       );
 
       setInvoices(sortedInvoices);
-
       setHasLoadError(false);
     } catch (error) {
       console.error("Error loading sales data:", error);
@@ -523,9 +438,9 @@ const Sales = () => {
     fetchInvoices();
   }, [fetchInvoices]);
 
-  /* =======================================================
-     DYNAMIC FINANCIAL YEARS
-  ======================================================= */
+  /* ------------------------------------------------------------------------ */
+  /* Dynamic Financial Years                                                  */
+  /* ------------------------------------------------------------------------ */
 
   const financialYearOptions = useMemo(() => {
     const yearSet = new Set();
@@ -549,17 +464,7 @@ const Sales = () => {
     });
   }, [invoices]);
 
-  /* =======================================================
-     SET DEFAULT FINANCIAL YEAR
-  ======================================================= */
-
   useEffect(() => {
-    /*
-     * VERY IMPORTANT:
-     *
-     * If user selected Custom,
-     * NEVER overwrite it.
-     */
     if (selectedFinancialYear === "custom") {
       return;
     }
@@ -573,12 +478,10 @@ const Sales = () => {
 
     if (financialYearOptions.length > 0) {
       setSelectedFinancialYear(financialYearOptions[0]);
+
       return;
     }
 
-    /*
-     * Fallback if there are no invoices.
-     */
     const currentFY = getFinancialYearLabel();
 
     if (currentFY) {
@@ -586,9 +489,9 @@ const Sales = () => {
     }
   }, [financialYearOptions, selectedFinancialYear]);
 
-  /* =======================================================
-     CUSTOMER LIST
-  ======================================================= */
+  /* ------------------------------------------------------------------------ */
+  /* Customers                                                                */
+  /* ------------------------------------------------------------------------ */
 
   const customers = useMemo(() => {
     const customerMap = new Map();
@@ -597,6 +500,7 @@ const Sales = () => {
       const id = getInvoiceCustomerId(invoice);
 
       const name = getInvoiceCustomerName(invoice);
+
       const city = getCustomerLocation(
         invoice?.customer?.address ||
           invoice?.address ||
@@ -606,7 +510,10 @@ const Sales = () => {
       );
 
       if (id) {
-        customerMap.set(id, { name, city });
+        customerMap.set(id, {
+          name,
+          city,
+        });
       }
     });
 
@@ -616,37 +523,9 @@ const Sales = () => {
     })).sort((a, b) => a.name.localeCompare(b.name));
   }, [invoices]);
 
-  /* =======================================================
-     CUSTOM DATE HANDLERS
-  ======================================================= */
-
-  const handleStartDateChange = (event) => {
-    const value = event.target.value;
-
-    setCustomStartDate(value);
-
-    /*
-     * If From becomes later than To,
-     * clear To.
-     */
-    if (customEndDate && value > customEndDate) {
-      setCustomEndDate("");
-    }
-  };
-
-  const handleEndDateChange = (event) => {
-    const value = event.target.value;
-
-    if (customStartDate && value < customStartDate) {
-      return;
-    }
-
-    setCustomEndDate(value);
-  };
-
-  /* =======================================================
-     DATE RANGE
-  ======================================================= */
+  /* ------------------------------------------------------------------------ */
+  /* Date range                                                               */
+  /* ------------------------------------------------------------------------ */
 
   const dateRange = useMemo(() => {
     if (selectedFinancialYear === "custom") {
@@ -659,31 +538,23 @@ const Sales = () => {
     return getFinancialYearDateRange(selectedFinancialYear);
   }, [selectedFinancialYear, customStartDate, customEndDate]);
 
-  const hasValidDateRange = Boolean(
-    dateRange.startDate &&
-    dateRange.endDate &&
-    dateRange.startDate <= dateRange.endDate,
-  );
+  const isCustomDateRangeIncomplete =
+    selectedFinancialYear === "custom" && (!customStartDate || !customEndDate);
 
-  /* =======================================================
-     FILTER INVOICES
-  ======================================================= */
+  const isCustomDateRangeInvalid =
+    selectedFinancialYear === "custom" &&
+    customStartDate &&
+    customEndDate &&
+    customStartDate > customEndDate;
+
+  /* ------------------------------------------------------------------------ */
+  /* Matching invoices                                                        */
+  /* ------------------------------------------------------------------------ */
 
   const matchingInvoices = useMemo(() => {
-    /*
-     * Custom date requires both dates.
-     */
-    if (selectedFinancialYear === "custom") {
-      if (!customStartDate || !customEndDate) {
-        return [];
-      }
+    const { startDate, endDate } = dateRange;
 
-      if (customStartDate > customEndDate) {
-        return [];
-      }
-    }
-
-    if (!hasValidDateRange) {
+    if (!startDate || !endDate || isCustomDateRangeInvalid) {
       return [];
     }
 
@@ -694,39 +565,20 @@ const Sales = () => {
         return false;
       }
 
-      /*
-       * Inclusive date comparison.
-       *
-       * Example:
-       * From = 2026-04-01
-       * To   = 2026-04-07
-       *
-       * Invoice 2026-04-07 IS included.
-       */
-      const matchesDate =
-        invoiceDate >= dateRange.startDate && invoiceDate <= dateRange.endDate;
+      const matchesDate = invoiceDate >= startDate && invoiceDate <= endDate;
 
-      const invoiceCustomerId = getInvoiceCustomerId(invoice);
+      const customerId = getInvoiceCustomerId(invoice);
 
       const matchesCustomer =
-        selectedCustomer === "all" ||
-        invoiceCustomerId === String(selectedCustomer);
+        selectedCustomer === "all" || customerId === selectedCustomer;
 
       return matchesDate && matchesCustomer;
     });
-  }, [
-    invoices,
-    dateRange,
-    selectedCustomer,
-    selectedFinancialYear,
-    customStartDate,
-    customEndDate,
-    hasValidDateRange,
-  ]);
+  }, [invoices, dateRange, selectedCustomer, isCustomDateRangeInvalid]);
 
-  /* =======================================================
-     SUMMARY
-  ======================================================= */
+  /* ------------------------------------------------------------------------ */
+  /* Summary                                                                  */
+  /* ------------------------------------------------------------------------ */
 
   const summary = useMemo(() => {
     return matchingInvoices.reduce(
@@ -752,9 +604,9 @@ const Sales = () => {
 
   const totalGst = summary.cgst + summary.sgst + summary.igst;
 
-  /* =======================================================
-     TOTAL CUSTOMERS
-  ======================================================= */
+  /* ------------------------------------------------------------------------ */
+  /* Total customers                                                          */
+  /* ------------------------------------------------------------------------ */
 
   const totalCustomers = useMemo(() => {
     const customerIds = new Set();
@@ -770,50 +622,72 @@ const Sales = () => {
     return customerIds.size;
   }, [matchingInvoices]);
 
-  /* =======================================================
-     MONTHLY SALES
-  ======================================================= */
+  /* ------------------------------------------------------------------------ */
+  /* Top Customers                                                            */
+  /* ------------------------------------------------------------------------ */
+
+  const topCustomers = useMemo(() => {
+    const customerMap = new Map();
+
+    matchingInvoices.forEach((invoice) => {
+      const customerId = getInvoiceCustomerId(invoice);
+
+      if (!customerId) {
+        return;
+      }
+
+      const customerName = getInvoiceCustomerName(invoice);
+
+      const currentSales = customerMap.get(customerId)?.sales || 0;
+
+      customerMap.set(customerId, {
+        id: customerId,
+        name: customerName,
+        sales: currentSales + (Number(invoice?.totalAmount) || 0),
+      });
+    });
+
+    const sortedCustomers = Array.from(customerMap.values())
+      .sort((a, b) => b.sales - a.sales)
+      .slice(0, 5);
+
+    const maximumSales =
+      sortedCustomers.length > 0 ? sortedCustomers[0].sales : 0;
+
+    return sortedCustomers.map((customer, index) => ({
+      ...customer,
+      rank: index + 1,
+      percentage: maximumSales > 0 ? (customer.sales / maximumSales) * 100 : 0,
+    }));
+  }, [matchingInvoices]);
+
+  /* ------------------------------------------------------------------------ */
+  /* Monthly sales                                                            */
+  /* ------------------------------------------------------------------------ */
 
   const monthlySales = useMemo(() => {
-    if (!hasValidDateRange) {
-      return [];
-    }
+    const showYear =
+      selectedFinancialYear === "custom" &&
+      dateRange.startDate &&
+      dateRange.endDate &&
+      dateRange.startDate.slice(0, 4) !== dateRange.endDate.slice(0, 4);
 
-    const startParts = getDateParts(dateRange.startDate);
-
-    const endParts = getDateParts(dateRange.endDate);
-
-    if (!startParts || !endParts) {
-      return [];
-    }
-
-    const spansMultipleYears = startParts.year !== endParts.year;
-
-    const showYear = selectedFinancialYear === "custom" && spansMultipleYears;
-
-    const data = getMonthBuckets(
+    const buckets = getMonthBuckets(
       dateRange.startDate,
       dateRange.endDate,
       showYear,
     );
 
-    const bucketMap = new Map();
-
-    data.forEach((bucket) => {
-      bucketMap.set(bucket.key, bucket);
-    });
+    const bucketMap = new Map(buckets.map((bucket) => [bucket.key, bucket]));
 
     matchingInvoices.forEach((invoice) => {
-      const invoiceDate = normalizeInvoiceDate(getInvoiceDate(invoice));
+      const date = normalizeInvoiceDate(getInvoiceDate(invoice));
 
-      const parts = getDateParts(invoiceDate);
-
-      if (!parts) {
+      if (!date) {
         return;
       }
 
-      const key = `${parts.year}-${String(parts.month).padStart(2, "0")}`;
-
+      const key = date.slice(0, 7);
       const bucket = bucketMap.get(key);
 
       if (!bucket) {
@@ -825,12 +699,24 @@ const Sales = () => {
       bucket.invoices += 1;
     });
 
-    return data;
-  }, [matchingInvoices, dateRange, selectedFinancialYear, hasValidDateRange]);
+    return buckets;
+  }, [matchingInvoices, dateRange, selectedFinancialYear]);
 
-  /* =======================================================
-     GST DATA
-  ======================================================= */
+  /* ------------------------------------------------------------------------ */
+  /* Invoice activity                                                         */
+  /* ------------------------------------------------------------------------ */
+
+  const invoiceActivity = useMemo(
+    () =>
+      monthlySales.map((month) => ({
+        ...month,
+      })),
+    [monthlySales],
+  );
+
+  /* ------------------------------------------------------------------------ */
+  /* GST chart                                                                */
+  /* ------------------------------------------------------------------------ */
 
   const taxData = useMemo(() => {
     return [
@@ -855,44 +741,97 @@ const Sales = () => {
       }));
   }, [summary, totalGst]);
 
-  /* =======================================================
-     SEARCH INVOICES
-  ======================================================= */
+  /* ------------------------------------------------------------------------ */
+  /* Invoice search                                                            */
+  /* ------------------------------------------------------------------------ */
 
   const displayedInvoices = useMemo(() => {
     const search = invoiceSearch.trim().toLowerCase();
 
-    const filtered = matchingInvoices.filter((invoice) => {
-      if (!search) {
-        return true;
-      }
+    const filtered = !search
+      ? matchingInvoices
+      : matchingInvoices.filter((invoice) => {
+          const invoiceNumber = String(getInvoiceNumber(invoice)).toLowerCase();
 
-      const number = String(getInvoiceNumber(invoice)).toLowerCase();
+          const customerName = String(
+            getInvoiceCustomerName(invoice),
+          ).toLowerCase();
 
-      const customer = String(getInvoiceCustomerName(invoice)).toLowerCase();
+          return (
+            invoiceNumber.includes(search) || customerName.includes(search)
+          );
+        });
 
-      return number.includes(search) || customer.includes(search);
-    });
-
-    return [...filtered].sort((firstInvoice, secondInvoice) => {
-      const firstNumber = Number(getInvoiceNumber(firstInvoice));
-      const secondNumber = Number(getInvoiceNumber(secondInvoice));
-
-      if (Number.isFinite(firstNumber) && Number.isFinite(secondNumber)) {
-        return firstNumber - secondNumber;
-      }
-
-      return String(getInvoiceNumber(firstInvoice)).localeCompare(
-        String(getInvoiceNumber(secondInvoice)),
+    return [...filtered].sort((firstInvoice, secondInvoice) =>
+      String(getInvoiceNumber(secondInvoice)).localeCompare(
+        String(getInvoiceNumber(firstInvoice)),
         undefined,
-        { numeric: true, sensitivity: "base" },
-      );
-    });
+        {
+          numeric: true,
+          sensitivity: "base",
+        },
+      ),
+    );
   }, [matchingInvoices, invoiceSearch]);
 
-  /* =======================================================
-     INVOICE CLICK
-  ======================================================= */
+  /* ------------------------------------------------------------------------ */
+  /* Pagination                                                               */
+  /* ------------------------------------------------------------------------ */
+
+  const totalInvoicePages = Math.ceil(
+    displayedInvoices.length / INVOICES_PER_PAGE,
+  );
+
+  const paginatedInvoices = useMemo(() => {
+    const startIndex = (invoicePage - 1) * INVOICES_PER_PAGE;
+
+    return displayedInvoices.slice(startIndex, startIndex + INVOICES_PER_PAGE);
+  }, [displayedInvoices, invoicePage]);
+
+  useEffect(() => {
+    setInvoicePage(1);
+  }, [
+    invoiceSearch,
+    selectedCustomer,
+    selectedFinancialYear,
+    customStartDate,
+    customEndDate,
+  ]);
+
+  useEffect(() => {
+    if (totalInvoicePages > 0 && invoicePage > totalInvoicePages) {
+      setInvoicePage(totalInvoicePages);
+    }
+  }, [invoicePage, totalInvoicePages]);
+
+  /* ------------------------------------------------------------------------ */
+  /* Handlers                                                                 */
+  /* ------------------------------------------------------------------------ */
+
+  const handlePeriodChange = (event) => {
+    setSelectedFinancialYear(event.target.value);
+
+    if (event.target.value !== "custom") {
+      setCustomStartDate("");
+      setCustomEndDate("");
+    }
+  };
+
+  const handleStartDateChange = (event) => {
+    setCustomStartDate(event.target.value);
+  };
+
+  const handleEndDateChange = (event) => {
+    setCustomEndDate(event.target.value);
+  };
+
+  const goToPreviousPage = () => {
+    setInvoicePage((page) => Math.max(1, page - 1));
+  };
+
+  const goToNextPage = () => {
+    setInvoicePage((page) => Math.min(totalInvoicePages, page + 1));
+  };
 
   const handleInvoiceClick = (invoice) => {
     const path = getInvoiceEditPath(invoice);
@@ -906,45 +845,23 @@ const Sales = () => {
     navigate(path);
   };
 
-  /* =======================================================
-     PERIOD CHANGE
-  ======================================================= */
-
-  const handlePeriodChange = (event) => {
-    const value = event.target.value;
-
-    setSelectedFinancialYear(value);
-
-    /*
-     * Clear custom dates when
-     * switching back to FY.
-     */
-    if (value !== "custom") {
-      setCustomStartDate("");
-      setCustomEndDate("");
-    }
-  };
-
-  /* =======================================================
-     RENDER
-  ======================================================= */
+  /* ------------------------------------------------------------------------ */
+  /* Render                                                                   */
+  /* ------------------------------------------------------------------------ */
 
   return (
     <div className="sales-dashboard">
-      {/* ===================================================
-          HEADER
-      =================================================== */}
+      {/* ------------------------------------------------------------------ */}
+      {/* Header                                                              */}
+      {/* ------------------------------------------------------------------ */}
 
       <div className="sales-header">
         <div className="sales-title">
           <h1>Sales Summary</h1>
-
           <p>Track your sales, taxes and invoices</p>
         </div>
 
         <div className="sales-filter-row">
-          {/* CUSTOMER */}
-
           <div className="sales-filter">
             <label htmlFor="sales-customer">Customer</label>
 
@@ -957,13 +874,12 @@ const Sales = () => {
 
               {customers.map((customer) => (
                 <option key={customer.id} value={customer.id}>
-                  {customer.name} {customer.city ? `- ${customer.city}` : ""}
+                  {customer.name}
+                  {customer.city ? ` - ${customer.city}` : ""}
                 </option>
               ))}
             </select>
           </div>
-
-          {/* PERIOD */}
 
           <div className="sales-filter">
             <label htmlFor="sales-period">Period</label>
@@ -982,8 +898,6 @@ const Sales = () => {
               <option value="custom">Custom</option>
             </select>
           </div>
-
-          {/* CUSTOM DATES */}
 
           {selectedFinancialYear === "custom" && (
             <div className="custom-date-inline">
@@ -1015,541 +929,666 @@ const Sales = () => {
         </div>
       </div>
 
-      {/* ===================================================
-          CUSTOM DATE STATUS
-      =================================================== */}
+      {/* ------------------------------------------------------------------ */}
+      {/* Date status                                                         */}
+      {/* ------------------------------------------------------------------ */}
 
-      {selectedFinancialYear === "custom" &&
-        (!customStartDate || !customEndDate) && (
-          <div className="sales-date-info">
-            <span className="sales-date-info-icon">i</span>
-
-            <span>Select both From and To dates to view sales data.</span>
-          </div>
-        )}
-
-      {selectedFinancialYear === "custom" &&
-        customStartDate &&
-        customEndDate &&
-        customStartDate > customEndDate && (
-          <div className="sales-date-error">
-            From date cannot be later than To date.
-          </div>
-        )}
-
-      {/* ===================================================
-          KPI CARDS
-      =================================================== */}
-
-      <div className="sales-kpi-grid">
-        <div className="sales-kpi-card sales-kpi-primary">
-          <div className="sales-kpi-icon">₹</div>
-
-          <div className="sales-kpi-content">
-            <span>Total Sales</span>
-
-            <strong>{formatCurrency(summary.sales)}</strong>
-
-            <small>{matchingInvoices.length} invoices</small>
-          </div>
+      {isCustomDateRangeIncomplete && selectedFinancialYear === "custom" && (
+        <div className="sales-date-message">
+          <i className="bi bi-info-circle" />
+          <span>Select both From and To dates to view sales.</span>
         </div>
+      )}
 
-        <div className="sales-kpi-card sales-kpi-cgst">
-          <div className="sales-kpi-icon">C</div>
-
-          <div className="sales-kpi-content">
-            <span>CGST</span>
-
-            <strong>{formatCurrency(summary.cgst)}</strong>
-
-            <small>Central GST</small>
-          </div>
+      {isCustomDateRangeInvalid && (
+        <div className="sales-date-message sales-date-error">
+          <i className="bi bi-exclamation-triangle" />
+          <span>From date cannot be later than To date.</span>
         </div>
+      )}
 
-        <div className="sales-kpi-card sales-kpi-sgst">
-          <div className="sales-kpi-icon">S</div>
+      {/* ------------------------------------------------------------------ */}
+      {/* Loading / Error                                                      */}
+      {/* ------------------------------------------------------------------ */}
 
-          <div className="sales-kpi-content">
-            <span>SGST</span>
-
-            <strong>{formatCurrency(summary.sgst)}</strong>
-
-            <small>State GST</small>
-          </div>
+      {isLoading ? (
+        <div className="sales-empty-state">
+          <div className="sales-loading-spinner" />
+          <p>Loading sales data...</p>
         </div>
-
-        <div className="sales-kpi-card sales-kpi-igst">
-          <div className="sales-kpi-icon">I</div>
-
-          <div className="sales-kpi-content">
-            <span>IGST</span>
-
-            <strong>{formatCurrency(summary.igst)}</strong>
-
-            <small>Integrated GST</small>
+      ) : hasLoadError ? (
+        <div className="sales-empty-state sales-error-state">
+          <div className="sales-empty-icon">
+            <i className="bi bi-exclamation-triangle" />
           </div>
+
+          <h3>Unable to load sales data</h3>
+
+          <p>Please try again to load the invoice information.</p>
+
+          <button
+            type="button"
+            className="sales-retry-button"
+            onClick={fetchInvoices}
+          >
+            <i className="bi bi-arrow-clockwise" />
+            Try Again
+          </button>
         </div>
+      ) : (
+        <>
+          {/* -------------------------------------------------------------- */}
+          {/* KPI Cards                                                        */}
+          {/* -------------------------------------------------------------- */}
 
-        <div className="sales-kpi-card sales-kpi-invoices">
-          <div className="sales-kpi-icon">#</div>
+          <div className="sales-kpi-grid">
+            <div className="sales-kpi-card sales-kpi-primary">
+              <div className="sales-kpi-icon">
+                <i className="bi bi-currency-rupee" />
+              </div>
 
-          <div className="sales-kpi-content">
-            <span>Invoices</span>
+              <div className="sales-kpi-content">
+                <span>Total Sales</span>
+                <strong>{formatCompactCurrency(summary.sales)}</strong>
+                <small>{formatCurrency(summary.sales)}</small>
+              </div>
+            </div>
 
-            <strong>{matchingInvoices.length}</strong>
+            <div className="sales-kpi-card sales-kpi-cgst">
+              <div className="sales-kpi-icon">
+                <i className="bi bi-building" />
+              </div>
 
-            <small>Selected period</small>
+              <div className="sales-kpi-content">
+                <span>CGST</span>
+                <strong>{formatCompactCurrency(summary.cgst)}</strong>
+                <small>Central GST</small>
+              </div>
+            </div>
+
+            <div className="sales-kpi-card sales-kpi-sgst">
+              <div className="sales-kpi-icon">
+                <i className="bi bi-geo-alt" />
+              </div>
+
+              <div className="sales-kpi-content">
+                <span>SGST</span>
+                <strong>{formatCompactCurrency(summary.sgst)}</strong>
+                <small>State GST</small>
+              </div>
+            </div>
+
+            <div className="sales-kpi-card sales-kpi-igst">
+              <div className="sales-kpi-icon">
+                <i className="bi bi-globe2" />
+              </div>
+
+              <div className="sales-kpi-content">
+                <span>IGST</span>
+                <strong>{formatCompactCurrency(summary.igst)}</strong>
+                <small>Integrated GST</small>
+              </div>
+            </div>
+
+            <div className="sales-kpi-card sales-kpi-invoices">
+              <div className="sales-kpi-icon">
+                <i className="bi bi-receipt" />
+              </div>
+
+              <div className="sales-kpi-content">
+                <span>Invoices</span>
+                <strong>{matchingInvoices.length}</strong>
+                <small>In selected period</small>
+              </div>
+            </div>
+
+            <div className="sales-kpi-card sales-kpi-customers">
+              <div className="sales-kpi-icon">
+                <i className="bi bi-people" />
+              </div>
+
+              <div className="sales-kpi-content">
+                <span>Customers</span>
+                <strong>{totalCustomers}</strong>
+                <small>Active customers</small>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="sales-kpi-card sales-kpi-customers">
-          <div className="sales-kpi-icon">👥</div>
+          {/* -------------------------------------------------------------- */}
+          {/* Charts Row                                                       */}
+          {/* -------------------------------------------------------------- */}
 
-          <div className="sales-kpi-content">
-            <span>Customers</span>
+          <div className="sales-main-grid">
+            {/* GST Donut */}
+            <div className="sales-chart-card gst-card">
+              <div className="sales-card-header">
+                <div>
+                  <h2>GST Summary</h2>
+                  <p>Tax collected in the selected period</p>
+                </div>
 
-            <strong>{totalCustomers}</strong>
-
-            <small>Unique customers</small>
-          </div>
-        </div>
-      </div>
-
-      {/* ===================================================
-          GST OVERVIEW
-      =================================================== */}
-
-      <div className="sales-chart-card gst-card">
-        <div className="sales-card-header">
-          <div>
-            <h2>GST Overview</h2>
-
-            <p>Tax distribution for selected invoices</p>
-          </div>
-
-          <div className="sales-card-total">
-            <span>Total GST</span>
-
-            <strong>{formatCurrency(totalGst)}</strong>
-          </div>
-        </div>
-
-        <div className="gst-content">
-          <div className="gst-donut-wrapper">
-            {totalGst > 0 ? (
-              <>
-                <ResponsiveContainer width="100%" height={280}>
-                  <PieChart>
-                    <Pie
-                      data={taxData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={82}
-                      outerRadius={112}
-                      paddingAngle={4}
-                      cornerRadius={8}
-                      stroke="none"
-                    >
-                      {taxData.map((entry) => (
-                        <Cell key={entry.name} fill={TAX_COLORS[entry.name]} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-
-                <div className="gst-donut-center">
-                  <span>Total GST</span>
-
+                <div className="chart-summary">
+                  <span>GST</span>
                   <strong>{formatCompactCurrency(totalGst)}</strong>
                 </div>
-              </>
-            ) : (
-              <div className="gst-empty">No GST data</div>
-            )}
-          </div>
+              </div>
 
-          <div className="tax-legend">
-            {["CGST", "SGST", "IGST"].map((tax) => {
-              const item = taxData.find((entry) => entry.name === tax);
+              {taxData.length > 0 ? (
+                <div className="gst-content">
+                  <div className="gst-donut-wrapper">
+                    <ResponsiveContainer width="100%" height={235}>
+                      <PieChart>
+                        <Pie
+                          data={taxData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={62}
+                          outerRadius={94}
+                          startAngle={90}
+                          endAngle={-270}
+                          paddingAngle={4}
+                          cornerRadius={10}
+                          stroke="none"
+                        >
+                          {taxData.map((entry) => (
+                            <Cell
+                              key={entry.name}
+                              fill={TAX_COLORS[entry.name]}
+                            />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
 
-              const value = Number(summary[tax.toLowerCase()]) || 0;
+                    <div className="gst-donut-center">
+                      <span>Total GST</span>
 
-              return (
-                <div className="tax-legend-item" key={tax}>
-                  <div className="tax-legend-left">
-                    <span
-                      className="tax-dot"
-                      style={{
-                        backgroundColor: TAX_COLORS[tax],
-                      }}
-                    />
+                      <strong>{formatCompactCurrency(totalGst)}</strong>
 
-                    <div>
-                      <strong>{tax}</strong>
-
-                      <span>{item?.percentage || "0.0"}% of GST</span>
+                      <small>Tax collected</small>
                     </div>
                   </div>
 
-                  <strong>{formatCurrency(value)}</strong>
+                  <div className="tax-legend">
+                    {taxData.map((item) => (
+                      <div className="tax-legend-item" key={item.name}>
+                        <div className="tax-legend-left">
+                          <span
+                            className="tax-dot"
+                            style={{
+                              backgroundColor: TAX_COLORS[item.name],
+                            }}
+                          />
+
+                          <span>{item.name}</span>
+                        </div>
+
+                        <div className="tax-legend-right">
+                          <strong>{formatCurrency(item.value)}</strong>
+
+                          <small>{item.percentage}%</small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              );
-            })}
+              ) : (
+                <div className="chart-empty-state">
+                  No GST data for the selected period.
+                </div>
+              )}
+            </div>
+
+            {/* Monthly Sales */}
+            <div className="sales-chart-card">
+              <div className="sales-card-header">
+                <div>
+                  <h2>Monthly Sales</h2>
+                  <p>Sales trend for the selected period</p>
+                </div>
+
+                <div className="chart-summary">
+                  <span>Total</span>
+                  <strong>{formatCompactCurrency(summary.sales)}</strong>
+                </div>
+              </div>
+
+              <div className="chart-container">
+                {monthlySales.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={310}>
+                    <AreaChart
+                      data={monthlySales}
+                      margin={{
+                        top: 10,
+                        right: 10,
+                        left: 0,
+                        bottom: 0,
+                      }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="salesGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="0%"
+                            stopColor="#6366f1"
+                            stopOpacity={0.35}
+                          />
+                          <stop
+                            offset="100%"
+                            stopColor="#6366f1"
+                            stopOpacity={0.03}
+                          />
+                        </linearGradient>
+                      </defs>
+
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#e2e8f0"
+                        vertical={false}
+                      />
+
+                      <XAxis
+                        dataKey="month"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fontSize: 11,
+                          fill: "#64748b",
+                        }}
+                        dy={8}
+                      />
+
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fontSize: 11,
+                          fill: "#64748b",
+                        }}
+                        tickFormatter={formatCompactCurrency}
+                        width={58}
+                      />
+
+                      <Tooltip
+                        content={<SalesTooltip />}
+                        cursor={{
+                          stroke: "#cbd5e1",
+                          strokeDasharray: "4 4",
+                        }}
+                      />
+
+                      <Area
+                        type="monotone"
+                        dataKey="sales"
+                        stroke="#6366f1"
+                        strokeWidth={2.5}
+                        fill="url(#salesGradient)"
+                        dot={false}
+                        activeDot={{
+                          r: 5,
+                          strokeWidth: 3,
+                          stroke: "#ffffff",
+                        }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="chart-empty-state">
+                    No sales data for the selected period.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* ===================================================
-          MONTHLY SALES
-      =================================================== */}
+          {/* -------------------------------------------------------------- */}
+          {/* Top Customers                                                    */}
+          {/* -------------------------------------------------------------- */}
 
-      <div className="sales-chart-card">
-        <div className="sales-card-header">
-          <div>
-            <h2>Monthly Sales</h2>
+          <div className="sales-chart-card top-customers-card">
+            <div className="sales-card-header">
+              <div>
+                <h2>Top Customers</h2>
+                <p>Customers generating the highest sales</p>
+              </div>
 
-            <p>Sales performance based on the selected period</p>
+              <div className="chart-summary">
+                <span>Top 5</span>
+                <strong>{topCustomers.length}</strong>
+              </div>
+            </div>
+
+            {topCustomers.length > 0 ? (
+              <div className="top-customers-list">
+                {topCustomers.map((customer) => (
+                  <div className="top-customer-item" key={customer.id}>
+                    <div className="top-customer-rank">{customer.rank}</div>
+
+                    <div className="top-customer-details">
+                      <div className="top-customer-info">
+                        <div className="top-customer-name">{customer.name}</div>
+
+                        <strong>{formatCompactCurrency(customer.sales)}</strong>
+                      </div>
+
+                      <div className="top-customer-progress">
+                        <span
+                          style={{
+                            width: `${customer.percentage}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="chart-empty-state">
+                No customer sales data for the selected period.
+              </div>
+            )}
           </div>
 
-          <div className="chart-summary">
-            <span>Total</span>
+          {/* -------------------------------------------------------------- */}
+          {/* Invoice Activity                                                 */}
+          {/* -------------------------------------------------------------- */}
 
-            <strong>{formatCompactCurrency(summary.sales)}</strong>
-          </div>
-        </div>
+          <div className="sales-chart-card invoice-activity-card">
+            <div className="sales-card-header">
+              <div>
+                <h2>Invoice Activity</h2>
+                <p>Number of invoices raised each month</p>
+              </div>
 
-        <div className="chart-container">
-          {monthlySales.length > 0 ? (
-            <ResponsiveContainer width="100%" height={320}>
-              <AreaChart
-                data={monthlySales}
-                margin={{
-                  top: 20,
-                  right: 20,
-                  left: 10,
-                  bottom: 5,
-                }}
-              >
-                <defs>
-                  <linearGradient
-                    id="salesGradient"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
+              <div className="chart-summary">
+                <span>Invoices</span>
+                <strong>{matchingInvoices.length}</strong>
+              </div>
+            </div>
+
+            <div className="chart-container">
+              {invoiceActivity.length > 0 ? (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart
+                    data={invoiceActivity}
+                    margin={{
+                      top: 25,
+                      right: 10,
+                      left: 0,
+                      bottom: 0,
+                    }}
                   >
-                    <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
-
-                    <stop
-                      offset="100%"
-                      stopColor="#6366f1"
-                      stopOpacity={0.02}
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#e2e8f0"
+                      vertical={false}
                     />
-                  </linearGradient>
-                </defs>
 
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="#e5e7eb"
-                />
+                    <XAxis
+                      dataKey="month"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{
+                        fontSize: 11,
+                        fill: "#64748b",
+                      }}
+                      dy={8}
+                    />
 
-                <XAxis
-                  dataKey="month"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{
-                    fill: "#64748b",
-                    fontSize: 12,
-                  }}
-                />
+                    <YAxis
+                      allowDecimals={false}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{
+                        fontSize: 11,
+                        fill: "#64748b",
+                      }}
+                      width={34}
+                    />
 
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{
-                    fill: "#64748b",
-                    fontSize: 12,
-                  }}
-                  tickFormatter={formatCompactCurrency}
-                />
+                    <Tooltip
+                      content={<InvoiceTooltip />}
+                      cursor={{
+                        fill: "#f8fafc",
+                      }}
+                    />
 
-                <Tooltip content={<SalesTooltip />} />
-
-                <Area
-                  type="monotone"
-                  dataKey="sales"
-                  stroke="#6366f1"
-                  strokeWidth={3}
-                  fill="url(#salesGradient)"
-                  dot={{
-                    r: 4,
-                    strokeWidth: 2,
-                    fill: "#ffffff",
-                  }}
-                  activeDot={{
-                    r: 6,
-                  }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="chart-empty-state">
-              {selectedFinancialYear === "custom"
-                ? "Select a valid custom date range to view sales."
-                : "No sales data for the selected period."}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ===================================================
-          INVOICE ACTIVITY
-      =================================================== */}
-
-      <div className="sales-chart-card">
-        <div className="sales-card-header">
-          <div>
-            <h2>Invoice Activity</h2>
-
-            <p>Number of invoices generated each month</p>
-          </div>
-
-          <div className="chart-summary">
-            <span>Total Invoices</span>
-
-            <strong>{matchingInvoices.length}</strong>
-          </div>
-        </div>
-
-        <div className="chart-container">
-          {monthlySales.length > 0 ? (
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart
-                data={monthlySales}
-                margin={{
-                  top: 30,
-                  right: 20,
-                  left: 10,
-                  bottom: 5,
-                }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="#e5e7eb"
-                />
-
-                <XAxis
-                  dataKey="month"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{
-                    fill: "#64748b",
-                    fontSize: 12,
-                  }}
-                />
-
-                <YAxis
-                  allowDecimals={false}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{
-                    fill: "#64748b",
-                    fontSize: 12,
-                  }}
-                />
-
-                <Tooltip content={<InvoiceTooltip />} />
-
-                <Bar
-                  dataKey="invoices"
-                  fill="#10b981"
-                  radius={[8, 8, 0, 0]}
-                  maxBarSize={52}
-                >
-                  <LabelList
-                    dataKey="invoices"
-                    position="top"
-                    fill="#334155"
-                    fontSize={12}
-                    fontWeight={600}
-                  />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="chart-empty-state">
-              {selectedFinancialYear === "custom"
-                ? "Select a valid custom date range to view invoice activity."
-                : "No invoice activity for the selected period."}
-            </div>
-          )}
-        </div>
-
-        <div className="invoice-footer">
-          <span>{matchingInvoices.length} invoices</span>
-
-          <span>{totalCustomers} customers</span>
-
-          <span>{formatCurrency(summary.sales)} sales</span>
-        </div>
-      </div>
-
-      {/* ===================================================
-          INVOICE TABLE
-      =================================================== */}
-
-      <div className="sales-chart-card invoices-table-card">
-        <div className="invoice-table-header">
-          <div>
-            <h2>Invoices</h2>
-
-            <p>View and manage invoices for the selected period</p>
-          </div>
-
-          <div className="invoice-table-actions">
-            <span className="invoice-count-badge">
-              {displayedInvoices.length} invoices
-            </span>
-
-            <div className="invoice-search-wrapper">
-              <span className="invoice-search-icon">⌕</span>
-
-              <input
-                type="text"
-                value={invoiceSearch}
-                onChange={(event) => setInvoiceSearch(event.target.value)}
-                placeholder="Search invoice or customer..."
-                className="invoice-search"
-              />
-
-              {invoiceSearch && (
-                <button
-                  type="button"
-                  className="invoice-search-clear"
-                  onClick={() => setInvoiceSearch("")}
-                  aria-label="Clear search"
-                >
-                  ×
-                </button>
+                    <Bar
+                      dataKey="invoices"
+                      fill="#10b981"
+                      radius={[7, 7, 0, 0]}
+                      barSize={34}
+                    >
+                      <LabelList
+                        dataKey="invoices"
+                        position="top"
+                        fill="#475569"
+                        fontSize={11}
+                        fontWeight={600}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="chart-empty-state">
+                  No invoice activity for the selected period.
+                </div>
               )}
             </div>
           </div>
-        </div>
 
-        {isLoading ? (
-          <div className="invoice-loading-state">
-            <div className="sales-loading-spinner" />
+          {/* -------------------------------------------------------------- */}
+          {/* Invoice Table                                                     */}
+          {/* -------------------------------------------------------------- */}
 
-            <span>Loading invoices...</span>
-          </div>
-        ) : hasLoadError ? (
-          <div className="invoice-empty-state">
-            <div className="invoice-empty-icon">!</div>
+          <div className="sales-invoice-card">
+            <div className="invoice-card-header">
+              <div>
+                <h2>Invoices</h2>
+                <p>Detailed invoice activity for the selected period</p>
+              </div>
 
-            <h3>Unable to load invoices</h3>
+              <div className="invoice-header-right">
+                <span className="invoice-count">
+                  {displayedInvoices.length}{" "}
+                  {displayedInvoices.length === 1 ? "invoice" : "invoices"}
+                </span>
 
-            <p>Please try again.</p>
+                <div className="invoice-search">
+                  <span className="invoice-search-icon">
+                    <i className="bi bi-search" />
+                  </span>
 
-            <button
-              type="button"
-              className="invoice-retry-button"
-              onClick={fetchInvoices}
-            >
-              Retry
-            </button>
-          </div>
-        ) : displayedInvoices.length === 0 ? (
-          <div className="invoice-empty-state">
-            <div className="invoice-empty-icon">✓</div>
+                  <input
+                    type="text"
+                    placeholder="Search invoice or customer..."
+                    value={invoiceSearch}
+                    onChange={(event) => setInvoiceSearch(event.target.value)}
+                  />
 
-            <h3>No invoices found</h3>
-
-            <p>
-              {selectedFinancialYear === "custom" &&
-              (!customStartDate || !customEndDate)
-                ? "Select a From and To date to view invoices."
-                : "No invoices match the selected filters."}
-            </p>
-          </div>
-        ) : (
-          <div className="invoice-table-wrapper">
-            <table className="invoice-table">
-              <thead>
-                <tr>
-                  <th>Invoice No.</th>
-
-                  <th>Date</th>
-
-                  <th>Customer</th>
-
-                  <th>CGST</th>
-
-                  <th>SGST</th>
-
-                  <th>IGST</th>
-
-                  <th>Total</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {displayedInvoices.map((invoice, index) => {
-                  const rowId =
-                    invoice?.invoiceId || invoice?.id || invoice?._id || index;
-
-                  return (
-                    <tr
-                      key={rowId}
-                      className="invoice-table-row-clickable"
-                      onClick={() => handleInvoiceClick(invoice)}
+                  {invoiceSearch && (
+                    <button
+                      type="button"
+                      className="invoice-search-clear"
+                      onClick={() => setInvoiceSearch("")}
+                      aria-label="Clear search"
                     >
-                      <td>
-                        <span className="invoice-number">
-                          {getInvoiceNumber(invoice)}
-                        </span>
-                      </td>
+                      <i className="bi bi-x" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
 
-                      <td>
-                        <span className="invoice-date">
-                          {formatDate(getInvoiceDate(invoice))}
-                        </span>
-                      </td>
+            {paginatedInvoices.length > 0 ? (
+              <>
+                <div className="invoice-table-wrapper">
+                  <table className="invoice-table">
+                    <thead>
+                      <tr>
+                        <th>Invoice</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Location</th>
+                        <th>Tax</th>
+                        <th className="amount-column">Amount</th>
+                      </tr>
+                    </thead>
 
-                      <td>
-                        <div className="invoice-customer">
-                          <span className="invoice-customer-icon">
-                            {getInvoiceCustomerName(invoice)
-                              .charAt(0)
-                              .toUpperCase()}
-                          </span>
+                    <tbody>
+                      {paginatedInvoices.map((invoice, index) => {
+                        const customerName = getInvoiceCustomerName(invoice);
 
-                          <span>{getInvoiceCustomerName(invoice)}</span>
-                        </div>
-                      </td>
+                        const location = getCustomerLocation(
+                          invoice?.customer?.address ||
+                            invoice?.address ||
+                            invoice?.customerAddress ||
+                            invoice?.customer_address ||
+                            "",
+                        );
 
-                      <td>{formatCurrency(invoice?.cgst)}</td>
+                        const tax =
+                          (Number(invoice?.cgst) || 0) +
+                          (Number(invoice?.sgst) || 0) +
+                          (Number(invoice?.igst) || 0);
 
-                      <td>{formatCurrency(invoice?.sgst)}</td>
+                        return (
+                          <tr
+                            key={
+                              invoice?.invoiceId ||
+                              invoice?.id ||
+                              `${getInvoiceNumber(invoice)}-${index}`
+                            }
+                            className="invoice-row"
+                            onClick={() => handleInvoiceClick(invoice)}
+                            title="Click to edit invoice"
+                          >
+                            <td>
+                              <div className="invoice-number-cell">
+                                <span className="invoice-table-icon">
+                                  <i className="bi bi-receipt" />
+                                </span>
 
-                      <td>{formatCurrency(invoice?.igst)}</td>
+                                <strong>{getInvoiceNumber(invoice)}</strong>
+                              </div>
+                            </td>
 
-                      <td>
-                        <span className="invoice-total-amount">
-                          {formatCurrency(invoice?.totalAmount)}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                            <td>{formatDate(getInvoiceDate(invoice))}</td>
+
+                            <td>
+                              <div className="invoice-customer-cell">
+                                <strong>{customerName}</strong>
+                              </div>
+                            </td>
+
+                            <td>
+                              <span className="invoice-location">
+                                {location || "-"}
+                              </span>
+                            </td>
+
+                            <td>
+                              <span className="invoice-tax">
+                                {formatCurrency(tax)}
+                              </span>
+                            </td>
+
+                            <td className="amount-column">
+                              <strong className="invoice-amount">
+                                {formatCurrency(invoice?.totalAmount)}
+                              </strong>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {totalInvoicePages > 1 && (
+                  <div className="invoice-pagination-footer">
+                    <div className="invoice-pagination-info">
+                      Showing{" "}
+                      <strong>
+                        {(invoicePage - 1) * INVOICES_PER_PAGE + 1}
+                      </strong>
+                      {" - "}
+                      <strong>
+                        {Math.min(
+                          invoicePage * INVOICES_PER_PAGE,
+                          displayedInvoices.length,
+                        )}
+                      </strong>
+                      {" of "}
+                      <strong>{displayedInvoices.length}</strong> invoices
+                    </div>
+
+                    <div className="invoice-pagination">
+                      <button
+                        type="button"
+                        className="invoice-pagination-button"
+                        onClick={goToPreviousPage}
+                        disabled={invoicePage === 1}
+                        aria-label="Previous page"
+                      >
+                        <i className="bi bi-chevron-left" />
+                      </button>
+
+                      {Array.from(
+                        {
+                          length: totalInvoicePages,
+                        },
+                        (_, index) => index + 1,
+                      ).map((page) => (
+                        <button
+                          key={page}
+                          type="button"
+                          className={`invoice-pagination-button ${
+                            invoicePage === page ? "active" : ""
+                          }`}
+                          onClick={() => setInvoicePage(page)}
+                        >
+                          {page}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        className="invoice-pagination-button"
+                        onClick={goToNextPage}
+                        disabled={invoicePage === totalInvoicePages}
+                        aria-label="Next page"
+                      >
+                        <i className="bi bi-chevron-right" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="invoice-empty-state">
+                <div className="invoice-empty-icon">
+                  <i className="bi bi-receipt" />
+                </div>
+
+                <h3>No invoices found</h3>
+
+                <p>
+                  No invoices match the selected filters or search criteria.
+                </p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 };

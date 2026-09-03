@@ -15,11 +15,12 @@
 }
 
 /* Layout fix */
-.container-fluid {
+.custom-navbar .container-fluid {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
 .brand {
@@ -27,6 +28,22 @@
   font-weight: bold;
   letter-spacing: 1px;
   text-decoration: none;
+}
+
+.custom-navbar h4.brand {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-navbar h4.brand .brand {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav-links {
@@ -129,6 +146,7 @@
 /* Hide hamburger in desktop */
 .hamburger-toggle {
   display: none;
+  flex: 0 0 auto;
   font-size: 26px;
   color: white;
   cursor: pointer;

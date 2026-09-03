@@ -1,179 +1,141 @@
-/* =========================================================
-   SALES DASHBOARD
-========================================================= */
-
 .sales-dashboard {
   width: 100%;
   min-height: 100%;
   padding: 24px;
   background: #f8fafc;
   box-sizing: border-box;
-  color: #0f172a;
 }
 
-/* =========================================================
+/* ==========================================================================
    HEADER
-========================================================= */
+   ========================================================================== */
 
 .sales-header {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 20px;
-  width: 100%;
-  margin-bottom: 22px;
+  gap: 24px;
+  margin-bottom: 20px;
 }
 
 .sales-title {
-  flex: 1 1 auto;
-  min-width: 180px;
+  flex: 1;
+  min-width: 0;
 }
 
 .sales-title h1 {
   margin: 0;
+  color: #0f172a;
   font-size: 26px;
   line-height: 1.2;
   font-weight: 700;
-  color: #0f172a;
+  letter-spacing: -0.02em;
 }
 
 .sales-title p {
-  margin: 7px 0 0;
-  font-size: 14px;
+  margin: 6px 0 0;
   color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
 }
-
-/* =========================================================
-   FILTERS
-========================================================= */
 
 .sales-filter-row {
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
-  gap: 8px;
-  flex: 0 0 auto;
   flex-wrap: nowrap;
-  min-width: 0;
+  gap: 10px;
+  flex: 0 0 auto;
 }
 
 .sales-filter {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  flex: 0 0 auto;
+  gap: 5px;
 }
 
 .sales-filter label {
+  color: #64748b;
   font-size: 11px;
   line-height: 1;
   font-weight: 600;
-  color: #64748b;
 }
 
 .sales-filter select,
 .sales-filter input {
-  height: 40px;
-  padding: 0 10px;
+  width: 100%;
+  height: 36px;
+  padding: 0 11px;
   border: 1px solid #dbe2ea;
-  border-radius: 9px;
-  background: #ffffff;
-  color: #1e293b;
-  font-size: 13px;
+  border-radius: 8px;
   outline: none;
-  box-sizing: border-box;
+  background: #ffffff;
+  color: #334155;
+  font-family: inherit;
+  font-size: 12px;
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .sales-filter select {
-  width: 115px;
   min-width: 115px;
+  cursor: pointer;
 }
 
 .sales-filter input {
-  width: 130px;
   min-width: 130px;
-}
-
-.sales-filter-row > .sales-filter:first-child select {
-  width: 125px;
-  min-width: 125px;
-}
-
-.sales-filter select:hover,
-.sales-filter input:hover {
-  border-color: #c4ceda;
 }
 
 .sales-filter select:focus,
 .sales-filter input:focus {
-  border-color: #6366f1;
+  border-color: #a5b4fc;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-/* =========================================================
-   CUSTOM DATE RANGE
-========================================================= */
+.sales-filter:first-child select {
+  min-width: 125px;
+}
 
 .custom-date-inline {
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  flex: 0 0 auto;
-  white-space: nowrap;
+  gap: 10px;
 }
 
 .custom-date-inline .sales-filter {
-  width: 130px;
-}
-
-.custom-date-inline .sales-filter input {
-  width: 130px;
   min-width: 130px;
 }
 
-.sales-date-info,
-.sales-date-error {
+/* ==========================================================================
+   DATE MESSAGES
+   ========================================================================== */
+
+.sales-date-message {
   display: flex;
   align-items: center;
-  gap: 9px;
-  margin: -6px 0 18px;
-  padding: 10px 14px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.sales-date-info {
-  border: 1px solid #bfdbfe;
+  gap: 8px;
+  margin: -6px 0 16px;
+  padding: 9px 12px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
   background: #eff6ff;
   color: #1d4ed8;
+  font-size: 12px;
 }
 
-.sales-date-info-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #2563eb;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
+.sales-date-message i {
+  font-size: 14px;
 }
 
 .sales-date-error {
-  border: 1px solid #fecaca;
+  border-color: #fecaca;
   background: #fef2f2;
-  color: #b91c1c;
+  color: #dc2626;
 }
 
-/* =========================================================
+/* ==========================================================================
    KPI GRID
-========================================================= */
+   ========================================================================== */
 
 .sales-kpi-grid {
   display: grid;
@@ -187,74 +149,108 @@
 .sales-kpi-card {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 13px;
-  min-height: 112px;
-  padding: 18px;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
+  align-items: flex-start;
+  gap: 14px;
+  min-height: 120px;
+  padding: 20px;
   overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow:
+    0 2px 6px rgba(15, 23, 42, 0.025),
+    0 10px 25px rgba(15, 23, 42, 0.035);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.sales-kpi-card::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  bottom: -35px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.sales-kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 20px rgba(15, 23, 42, 0.06),
+    0 18px 35px rgba(15, 23, 42, 0.05);
+}
+
+.sales-kpi-icon {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  font-size: 19px;
+  line-height: 1;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
 }
 
-.sales-kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.07);
-}
-
-.sales-kpi-icon {
-  flex: 0 0 auto;
+.sales-kpi-icon i {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 11px;
-  background: #f1f5f9;
-  color: #334155;
-  font-size: 17px;
-  font-weight: 700;
+}
+
+.sales-kpi-card:hover .sales-kpi-icon {
+  transform: scale(1.08);
 }
 
 .sales-kpi-content {
-  min-width: 0;
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .sales-kpi-content span {
-  margin-bottom: 4px;
+  margin-bottom: 5px;
+  color: #64748b;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
 }
 
 .sales-kpi-content strong {
-  font-size: 20px;
-  line-height: 1.2;
   color: #0f172a;
+  font-size: 21px;
+  line-height: 1.2;
+  font-weight: 700;
   white-space: nowrap;
 }
 
 .sales-kpi-content small {
-  margin-top: 5px;
-  font-size: 11px;
+  margin-top: 6px;
   color: #94a3b8;
+  font-size: 11px;
 }
 
-/* Primary */
+/* KPI colors */
 
 .sales-kpi-primary {
   border-color: #c7d2fe;
-  background: linear-gradient(
-    135deg,
-    #ffffff 0%,
-    #f5f3ff 100%
-  );
+  background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);
+}
+
+.sales-kpi-primary::after {
+  background: #c7d2fe;
 }
 
 .sales-kpi-primary .sales-kpi-icon {
@@ -262,114 +258,149 @@
   color: #4f46e5;
 }
 
-/* CGST */
+.sales-kpi-cgst::after {
+  background: #ddd6fe;
+}
 
 .sales-kpi-cgst .sales-kpi-icon {
   background: #eef2ff;
   color: #4f46e5;
 }
 
-/* SGST */
+.sales-kpi-sgst::after {
+  background: #bbf7d0;
+}
 
 .sales-kpi-sgst .sales-kpi-icon {
   background: #ecfdf5;
   color: #059669;
 }
 
-/* IGST */
+.sales-kpi-igst::after {
+  background: #fde68a;
+}
 
 .sales-kpi-igst .sales-kpi-icon {
   background: #fffbeb;
   color: #d97706;
 }
 
-/* Invoices */
+.sales-kpi-invoices::after {
+  background: #bae6fd;
+}
 
 .sales-kpi-invoices .sales-kpi-icon {
   background: #f0f9ff;
   color: #0284c7;
 }
 
-/* Customers */
+.sales-kpi-customers::after {
+  background: #f5d0fe;
+}
 
 .sales-kpi-customers .sales-kpi-icon {
   background: #fdf4ff;
   color: #a21caf;
 }
 
-/* =========================================================
-   COMMON CARD
-========================================================= */
+/* ==========================================================================
+   GENERAL CARDS
+   ========================================================================== */
+
+.sales-main-grid {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.sales-chart-card,
+.sales-invoice-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow:
+    0 2px 6px rgba(15, 23, 42, 0.02),
+    0 10px 25px rgba(15, 23, 42, 0.025);
+}
 
 .sales-chart-card {
-  width: 100%;
+  padding: 20px;
   margin-bottom: 18px;
-  padding: 22px;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
   box-sizing: border-box;
 }
 
-.sales-card-header {
+.sales-main-grid .sales-chart-card {
+  margin-bottom: 0;
+}
+
+.sales-card-header,
+.invoice-card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 18px;
 }
 
-.sales-card-header h2 {
+.sales-card-header h2,
+.invoice-card-header h2 {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
   color: #0f172a;
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 700;
 }
 
-.sales-card-header p {
+.sales-card-header p,
+.invoice-card-header p {
   margin: 5px 0 0;
-  font-size: 12px;
   color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
-.sales-card-total,
 .chart-summary {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 3px;
+  flex: 0 0 auto;
 }
 
-.sales-card-total span,
 .chart-summary span {
-  font-size: 11px;
   color: #94a3b8;
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.sales-card-total strong,
 .chart-summary strong {
-  font-size: 17px;
+  margin-top: 3px;
   color: #0f172a;
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 700;
 }
 
-/* =========================================================
-   GST
-========================================================= */
+/* ==========================================================================
+   GST DONUT
+   ========================================================================== */
+
+.gst-card {
+  min-width: 0;
+}
 
 .gst-content {
   display: grid;
-  grid-template-columns:
-    minmax(300px, 1fr)
-    minmax(300px, 0.9fr);
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 0.8fr);
   align-items: center;
-  gap: 35px;
+  gap: 8px;
 }
 
 .gst-donut-wrapper {
   position: relative;
-  width: 100%;
-  min-height: 280px;
+  min-width: 0;
 }
 
 .gst-donut-center {
@@ -382,271 +413,343 @@
   justify-content: center;
   transform: translate(-50%, -50%);
   pointer-events: none;
+  text-align: center;
 }
 
 .gst-donut-center span {
-  font-size: 11px;
   color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .gst-donut-center strong {
-  margin-top: 4px;
-  font-size: 22px;
+  margin-top: 5px;
   color: #0f172a;
+  font-size: 25px;
+  line-height: 1;
+  font-weight: 700;
 }
 
-.gst-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 280px;
+.gst-donut-center small {
+  margin-top: 6px;
   color: #94a3b8;
-  font-size: 13px;
+  font-size: 10px;
 }
 
 .tax-legend {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .tax-legend-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 14px 16px;
-  border: 1px solid #eef2f7;
-  border-radius: 11px;
+  gap: 12px;
+  padding: 10px 11px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+  border-color: #eef2f7;
   background: #fafbfc;
+}
+
+.tax-legend-item:hover {
+  border-color: #ebebec;
+  background: #f1f6fb;
 }
 
 .tax-legend-left {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tax-legend-left > span:last-child {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .tax-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex: 0 0 auto;
 }
 
-.tax-legend-left div {
+.tax-legend-right {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: flex-end;
+  flex: 0 0 auto;
 }
 
-.tax-legend-left strong {
-  font-size: 13px;
+.tax-legend-right strong {
   color: #334155;
+  font-size: 12px;
+  line-height: 1.2;
 }
 
-.tax-legend-left span {
-  font-size: 11px;
+.tax-legend-right small {
+  margin-top: 3px;
   color: #94a3b8;
+  font-size: 10px;
 }
 
-.tax-legend-item > strong {
-  font-size: 13px;
-  color: #0f172a;
-  white-space: nowrap;
-}
-
-/* =========================================================
+/* ==========================================================================
    CHARTS
-========================================================= */
+   ========================================================================== */
 
 .chart-container {
   width: 100%;
-  min-height: 320px;
+  min-height: 280px;
+}
+
+.sales-chart-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 125px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.sales-chart-tooltip span {
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.sales-chart-tooltip strong {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .chart-empty-state {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 320px;
-  border: 1px dashed #dbe2ea;
-  border-radius: 10px;
+  min-height: 230px;
+  padding: 24px;
   color: #94a3b8;
-  font-size: 13px;
+  font-size: 12px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   TOP CUSTOMERS
+   ========================================================================== */
+
+.top-customers-card {
+  overflow: hidden;
+}
+
+.top-customers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.top-customer-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 14px;
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
   background: #fafbfc;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
-.sales-chart-tooltip {
-  min-width: 150px;
-  padding: 11px 13px;
-  border: 1px solid #e2e8f0;
-  border-radius: 9px;
+.top-customer-item:hover {
+  border-color: #e2e8f0;
   background: #ffffff;
-  box-shadow: 0 8px 25px rgba(15, 23, 42, 0.1);
+  transform: translateX(2px);
 }
 
-.tooltip-label {
-  margin-bottom: 7px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.tooltip-value {
+.top-customer-rank {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-}
-
-.tooltip-value span {
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #eef2ff;
+  color: #4f46e5;
   font-size: 12px;
-  color: #94a3b8;
+  font-weight: 700;
 }
 
-.tooltip-value strong {
-  font-size: 13px;
-  color: #0f172a;
+.top-customer-item:nth-child(2) .top-customer-rank {
+  background: #ecfdf5;
+  color: #059669;
 }
 
-/* =========================================================
-   INVOICE FOOTER
-========================================================= */
-
-.invoice-footer {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  margin-top: 4px;
-  padding-top: 16px;
-  border-top: 1px solid #eef2f7;
+.top-customer-item:nth-child(3) .top-customer-rank {
+  background: #fffbeb;
+  color: #d97706;
 }
 
-.invoice-footer span {
-  position: relative;
-  font-size: 12px;
-  color: #64748b;
+.top-customer-details {
+  flex: 1;
+  min-width: 0;
 }
 
-.invoice-footer span:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: -15px;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #cbd5e1;
-  transform: translateY(-50%);
-}
-
-/* =========================================================
-   INVOICE TABLE HEADER
-========================================================= */
-
-.invoice-table-header {
+.top-customer-info {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
+  margin-bottom: 8px;
+}
+
+.top-customer-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-customer-info strong {
+  flex: 0 0 auto;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.top-customer-progress {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+
+.top-customer-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+  transition: width 0.3s ease;
+}
+
+/* ==========================================================================
+   INVOICE ACTIVITY
+   ========================================================================== */
+
+.invoice-activity-card {
   margin-bottom: 18px;
 }
 
-.invoice-table-header h2 {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 700;
-  color: #0f172a;
+/* ==========================================================================
+   INVOICE TABLE CARD
+   ========================================================================== */
+
+.sales-invoice-card {
+  padding: 20px;
+  margin-bottom: 18px;
+  box-sizing: border-box;
 }
 
-.invoice-table-header p {
-  margin: 5px 0 0;
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.invoice-table-actions {
+.invoice-header-right {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
+  flex: 0 0 auto;
 }
 
-.invoice-count-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 32px;
-  padding: 0 11px;
-  border-radius: 8px;
-  background: #f1f5f9;
-  color: #475569;
-  font-size: 12px;
+.invoice-count {
+  color: #64748b;
+  font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
 }
 
-/* =========================================================
-   SEARCH
-========================================================= */
-
-.invoice-search-wrapper {
+.invoice-search {
   position: relative;
   display: flex;
   align-items: center;
-}
-
-.invoice-search {
   width: 245px;
-  height: 38px;
-  padding: 0 34px;
-  border: 1px solid #dbe2ea;
-  border-radius: 9px;
-  background: #ffffff;
-  color: #1e293b;
-  font-size: 12px;
-  outline: none;
-  box-sizing: border-box;
 }
 
-.invoice-search:focus {
-  border-color: #6366f1;
+.invoice-search input {
+  width: 100%;
+  height: 36px;
+  padding: 0 36px 0 34px;
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+  outline: none;
+  background: #ffffff;
+  color: #334155;
+  font-family: inherit;
+  font-size: 12px;
+  box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.invoice-search input::placeholder {
+  color: #a1aab7;
+}
+
+.invoice-search input:focus {
+  border-color: #a5b4fc;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .invoice-search-icon {
   position: absolute;
-  left: 12px;
-  z-index: 1;
+  left: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #94a3b8;
-  font-size: 18px;
+  font-size: 13px;
   pointer-events: none;
 }
 
 .invoice-search-clear {
   position: absolute;
-  right: 8px;
+  right: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
-  background: #f1f5f9;
-  color: #64748b;
-  font-size: 16px;
+  border-radius: 6px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 15px;
   cursor: pointer;
 }
 
 .invoice-search-clear:hover {
-  background: #e2e8f0;
+  background: #f1f5f9;
+  color: #475569;
 }
 
-/* =========================================================
-   INVOICE TABLE
-========================================================= */
+/* Table */
 
 .invoice-table-wrapper {
   width: 100%;
@@ -659,109 +762,212 @@
   width: 100%;
   min-width: 850px;
   border-collapse: collapse;
-  background: #ffffff;
 }
 
-.invoice-table thead th {
-  height: 44px;
-  padding: 0 15px;
-  border-bottom: 1px solid #e5e7eb;
+.invoice-table thead {
   background: #f8fafc;
+}
+
+.invoice-table th {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e8edf3;
   color: #64748b;
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1.2;
   font-weight: 700;
+  letter-spacing: 0.04em;
   text-align: left;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
-.invoice-table tbody td {
-  height: 58px;
-  padding: 0 15px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #475569;
+.invoice-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #eef2f7;
+  color: #64748b;
   font-size: 12px;
-  white-space: nowrap;
+  vertical-align: middle;
 }
 
 .invoice-table tbody tr:last-child td {
   border-bottom: 0;
 }
 
-.invoice-table-row-clickable {
+.invoice-row {
   cursor: pointer;
   transition:
     background 0.15s ease,
-    box-shadow 0.15s ease;
+    transform 0.15s ease;
 }
 
-.invoice-table-row-clickable:hover {
-  background: #f8faff;
-  box-shadow: inset 3px 0 0 #6366f1;
+.invoice-row:hover {
+  background: #fafbff;
 }
 
-.invoice-number {
-  color: #4f46e5;
+.invoice-number-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 125px;
+}
+
+.invoice-number-cell strong {
+  color: #334155;
+  font-size: 12px;
   font-weight: 700;
 }
 
-.invoice-date {
-  color: #64748b;
-}
-
-.invoice-customer {
+.invoice-table-icon {
   display: flex;
   align-items: center;
-  gap: 9px;
-  max-width: 280px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.invoice-customer-icon {
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 8px;
   background: #eef2ff;
   color: #4f46e5;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
 }
 
-.invoice-customer > span:last-child {
+.invoice-customer-cell {
+  max-width: 250px;
+}
+
+.invoice-customer-cell strong {
+  display: block;
   overflow: hidden;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.invoice-total-amount {
+.invoice-location {
+  display: inline-block;
+  max-width: 150px;
+  overflow: hidden;
+  color: #64748b;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invoice-tax {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.invoice-amount {
   color: #0f172a;
+  font-size: 13px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
-/* =========================================================
-   LOADING
-========================================================= */
+.amount-column {
+  text-align: right !important;
+}
 
-.invoice-loading-state {
+/* ==========================================================================
+   PAGINATION
+   ========================================================================== */
+
+.invoice-pagination-footer {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-height: 220px;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #eef2f7;
+}
+
+.invoice-pagination-info {
   color: #64748b;
-  font-size: 13px;
+  font-size: 12px;
+}
+
+.invoice-pagination-info strong {
+  color: #334155;
+  font-weight: 700;
+}
+
+.invoice-pagination {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.invoice-pagination-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #dbe2ea;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.invoice-pagination-button:hover:not(:disabled) {
+  border-color: #a5b4fc;
+  background: #f8faff;
+  color: #4f46e5;
+  transform: translateY(-1px);
+}
+
+.invoice-pagination-button.active {
+  border-color: #6366f1;
+  background: #6366f1;
+  color: #ffffff;
+}
+
+.invoice-pagination-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   EMPTY / LOADING STATES
+   ========================================================================== */
+
+.sales-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 420px;
+  padding: 40px 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.sales-empty-state p {
+  margin: 10px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 .sales-loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #e2e8f0;
+  width: 34px;
+  height: 34px;
+  border: 3px solid #e2e8f0;
   border-top-color: #6366f1;
   border-radius: 50%;
-  animation: sales-spin 0.7s linear infinite;
+  animation: sales-spin 0.8s linear infinite;
 }
 
 @keyframes sales-spin {
@@ -770,64 +976,80 @@
   }
 }
 
-/* =========================================================
-   EMPTY STATE
-========================================================= */
+.sales-error-state h3 {
+  margin: 14px 0 0;
+  color: #334155;
+  font-size: 16px;
+}
+
+.sales-empty-icon,
+.invoice-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 20px;
+}
+
+.sales-retry-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  margin-top: 16px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #6366f1;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.sales-retry-button:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+}
 
 .invoice-empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 230px;
+  min-height: 260px;
+  padding: 30px;
   text-align: center;
 }
 
 .invoice-empty-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  margin-bottom: 12px;
-  border-radius: 50%;
   background: #f1f5f9;
   color: #64748b;
-  font-size: 18px;
-  font-weight: 700;
 }
 
 .invoice-empty-state h3 {
-  margin: 0;
-  font-size: 15px;
+  margin: 13px 0 0;
   color: #334155;
+  font-size: 15px;
 }
 
 .invoice-empty-state p {
-  margin: 6px 0 15px;
+  margin: 6px 0 0;
   color: #94a3b8;
-  font-size: 12px;
+  font-size: 11px;
 }
 
-.invoice-retry-button {
-  height: 36px;
-  padding: 0 15px;
-  border: 0;
-  border-radius: 8px;
-  background: #4f46e5;
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.invoice-retry-button:hover {
-  background: #4338ca;
-}
-
-/* =========================================================
-   RESPONSIVE - 1200px
-========================================================= */
+/* ==========================================================================
+   RESPONSIVE - 1200
+   ========================================================================== */
 
 @media (max-width: 1200px) {
   .sales-dashboard {
@@ -835,73 +1057,45 @@
   }
 
   .sales-header {
-    gap: 14px;
-  }
-
-  .sales-title {
-    min-width: 160px;
-  }
-
-  .sales-title h1 {
-    font-size: 24px;
+    gap: 16px;
   }
 
   .sales-filter-row {
-    gap: 6px;
+    gap: 8px;
   }
 
-  .sales-filter-row > .sales-filter:first-child select {
-    width: 115px;
-    min-width: 115px;
-  }
-
-  .sales-filter-row > .sales-filter:nth-child(2) select {
-    width: 105px;
+  .sales-filter select {
     min-width: 105px;
   }
 
-  .custom-date-inline {
-    gap: 6px;
+  .sales-filter:first-child select {
+    min-width: 115px;
   }
 
-  .custom-date-inline .sales-filter,
-  .custom-date-inline .sales-filter input {
-    width: 120px;
-    min-width: 120px;
+  .sales-filter input {
+    min-width: 115px;
+  }
+
+  .custom-date-inline .sales-filter {
+    min-width: 115px;
   }
 
   .sales-kpi-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .sales-kpi-primary {
-    grid-column: span 1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-/* =========================================================
-   RESPONSIVE - 900px
-========================================================= */
+/* ==========================================================================
+   RESPONSIVE - 900
+   ========================================================================== */
 
 @media (max-width: 900px) {
   .sales-dashboard {
     padding: 18px;
   }
 
-  .sales-header {
-    gap: 10px;
-  }
-
-  .sales-title {
-    min-width: 140px;
-  }
-
   .sales-title h1 {
     font-size: 22px;
-  }
-
-  .sales-title p {
-    font-size: 13px;
   }
 
   .sales-filter label {
@@ -910,119 +1104,80 @@
 
   .sales-filter select,
   .sales-filter input {
-    height: 38px;
-    font-size: 12px;
-    padding: 0 8px;
+    font-size: 11px;
   }
 
-  .sales-filter-row > .sales-filter:first-child select {
-    width: 105px;
-    min-width: 105px;
+  .sales-main-grid {
+    grid-template-columns: 1fr;
   }
 
-  .sales-filter-row > .sales-filter:nth-child(2) select {
-    width: 95px;
-    min-width: 95px;
+  .gst-content {
+    grid-template-columns: minmax(280px, 1fr) minmax(190px, 0.8fr);
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE - 760
+   ========================================================================== */
+
+@media (max-width: 760px) {
+  .sales-header {
+    align-items: stretch;
+    flex-direction: column;
   }
 
-  .custom-date-inline .sales-filter,
-  .custom-date-inline .sales-filter input {
-    width: 110px;
+  .sales-filter-row {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .sales-filter {
+    flex: 0 0 auto;
+  }
+
+  .sales-filter select,
+  .sales-filter input {
     min-width: 110px;
+  }
+
+  .custom-date-inline {
+    flex-wrap: wrap;
+  }
+
+  .invoice-card-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .invoice-header-right {
+    justify-content: space-between;
+  }
+
+  .invoice-search {
+    width: min(100%, 300px);
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE - 700
+   ========================================================================== */
+
+@media (max-width: 700px) {
+  .sales-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .gst-content {
     grid-template-columns: 1fr;
-    gap: 10px;
   }
 
   .tax-legend {
-    margin-top: -10px;
-  }
-}
-
-/* =========================================================
-   RESPONSIVE - 760px
-   Header now stacks only on genuinely narrow screens.
-========================================================= */
-
-@media (max-width: 760px) {
-  .sales-header {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-
-  .sales-title {
-    min-width: 0;
-  }
-
-  .sales-filter-row {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .sales-filter-row > .sales-filter:first-child select {
-    width: 125px;
-    min-width: 125px;
-  }
-
-  .sales-filter-row > .sales-filter:nth-child(2) select {
-    width: 115px;
-    min-width: 115px;
-  }
-
-  .custom-date-inline {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-  }
-
-  .custom-date-inline .sales-filter,
-  .custom-date-inline .sales-filter input {
-    width: 125px;
-    min-width: 125px;
-  }
-
-  .sales-card-header {
-    gap: 12px;
-  }
-
-  .invoice-table-header {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .invoice-table-actions {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .invoice-search-wrapper {
-    width: 100%;
-  }
-
-  .invoice-search {
-    width: 100%;
-  }
-}
-
-/* =========================================================
-   RESPONSIVE - 700px
-========================================================= */
-
-@media (max-width: 700px) {
-  .sales-kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+    padding: 0 12px 12px;
   }
 
   .sales-filter-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    align-items: stretch;
     width: 100%;
   }
 
@@ -1030,12 +1185,9 @@
     width: 100%;
   }
 
-  .sales-filter-row > .sales-filter:first-child,
-  .sales-filter-row > .sales-filter:first-child select,
-  .sales-filter-row > .sales-filter:nth-child(2),
-  .sales-filter-row > .sales-filter:nth-child(2) select {
+  .sales-filter select,
+  .sales-filter input {
     width: 100%;
-    min-width: 0;
   }
 
   .custom-date-inline {
@@ -1043,19 +1195,25 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     width: 100%;
-    gap: 8px;
   }
 
-  .custom-date-inline .sales-filter,
-  .custom-date-inline .sales-filter input {
-    width: 100%;
+  .custom-date-inline .sales-filter {
     min-width: 0;
+  }
+
+  .invoice-pagination-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .invoice-pagination {
+    justify-content: flex-end;
   }
 }
 
-/* =========================================================
-   RESPONSIVE - 500px
-========================================================= */
+/* ==========================================================================
+   RESPONSIVE - 500
+   ========================================================================== */
 
 @media (max-width: 500px) {
   .sales-dashboard {
@@ -1063,7 +1221,11 @@
   }
 
   .sales-title h1 {
-    font-size: 22px;
+    font-size: 20px;
+  }
+
+  .sales-title p {
+    font-size: 12px;
   }
 
   .sales-kpi-grid {
@@ -1072,41 +1234,134 @@
 
   .sales-kpi-card {
     min-height: 95px;
-  }
-
-  .sales-chart-card {
     padding: 16px;
-    border-radius: 12px;
   }
 
-  .sales-card-header {
-    flex-direction: column;
+  .sales-kpi-content strong {
+    font-size: 18px;
   }
 
-  .sales-card-total,
-  .chart-summary {
-    align-items: flex-start;
+  .sales-chart-card,
+  .sales-invoice-card {
+    padding: 16px;
+    border-radius: 14px;
   }
 
   .gst-donut-wrapper {
     min-height: 240px;
   }
 
-  .gst-empty {
-    height: 240px;
+  .gst-donut-center strong {
+    font-size: 22px;
   }
 
-  .tax-legend-item {
+  .sales-card-header {
+    gap: 10px;
+  }
+
+  .chart-summary strong {
+    font-size: 13px;
+  }
+
+  .invoice-header-right {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .invoice-search {
+    width: 100%;
+  }
+
+  .invoice-count {
+    align-self: flex-start;
+  }
+
+  .top-customer-item {
+    gap: 10px;
     padding: 12px;
   }
 
-  .invoice-footer {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 9px;
+  .top-customer-info {
+    gap: 10px;
   }
 
-  .invoice-footer span:not(:last-child)::after {
-    display: none;
+  .top-customer-name {
+    font-size: 12px;
+  }
+
+  .top-customer-info strong {
+    font-size: 12px;
+  }
+
+  .invoice-pagination-footer {
+    gap: 12px;
+  }
+
+  .invoice-pagination {
+    justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE - 400
+   ========================================================================== */
+
+@media (max-width: 400px) {
+  .sales-dashboard {
+    padding: 10px;
+  }
+
+  .sales-title h1 {
+    font-size: 19px;
+  }
+
+  .sales-filter-row {
+    gap: 8px;
+  }
+
+  .sales-filter select,
+  .sales-filter input {
+    height: 34px;
+    padding: 0 9px;
+    font-size: 11px;
+  }
+
+  .sales-kpi-card {
+    padding: 15px;
+  }
+
+  .sales-kpi-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 17px;
+  }
+
+  .sales-kpi-content strong {
+    font-size: 18px;
+  }
+
+  .sales-chart-card,
+  .sales-invoice-card {
+    padding: 12px;
+  }
+
+  .sales-card-header h2,
+  .invoice-card-header h2 {
+    font-size: 14px;
+  }
+
+  .sales-card-header p,
+  .invoice-card-header p {
+    font-size: 10px;
+  }
+
+  .top-customer-rank {
+    width: 28px;
+    height: 28px;
+  }
+
+  .invoice-pagination-button {
+    min-width: 30px;
+    height: 30px;
   }
 }
