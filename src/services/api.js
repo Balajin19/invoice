@@ -10,6 +10,24 @@ const apiClient = axios.create({
   baseURL: apiBaseUrl,
 });
 
+export const getApiErrorMessage = (error, fallbackMessage) => {
+  const status = error?.response?.status;
+
+  if (status === 401) {
+    return "Your session has expired. Please sign in again.";
+  }
+
+  if (status === 500) {
+    return "The server encountered an error. Please try again shortly.";
+  }
+
+  if (status === 502 || status === 503 || status === 504) {
+    return "The service is temporarily unavailable. Please try again shortly.";
+  }
+
+  return error?.response?.data?.message || fallbackMessage;
+};
+
 let activeGetRequests = 0;
 let onApiLoadingChange = () => {};
 let hideLoaderTimeout = null;
@@ -89,6 +107,8 @@ apiClient.interceptors.response.use(
       activeGetRequests = Math.max(0, activeGetRequests - 1);
       updateApiLoading();
     }
+
+    error.userMessage = getApiErrorMessage(error, error.message);
 
     return Promise.reject(error);
   },

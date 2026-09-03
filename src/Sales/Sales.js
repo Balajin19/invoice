@@ -18,7 +18,7 @@ import {
   LabelList,
 } from "recharts";
 
-import { invoiceApi } from "../services/api";
+import { getApiErrorMessage, invoiceApi } from "../services/api";
 import {
   getCustomerLocation,
   getFinancialYearLabel,
@@ -428,7 +428,9 @@ const Sales = () => {
 
       setHasLoadError(true);
 
-      showErrorToast("Unable to load sales data. Please try again.");
+      showErrorToast(
+        getApiErrorMessage(error, "Unable to load sales data. Please try again."),
+      );
     } finally {
       setIsLoading(false);
     }
