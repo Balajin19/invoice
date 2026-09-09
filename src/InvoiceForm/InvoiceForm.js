@@ -38,6 +38,7 @@ function InvoiceForm() {
   );
   const companySettings =
     companyList.find((company) => company?.isPrimary) || companyList[0] || {};
+  const primaryCompanyId = companySettings?.companyId || "";
   const hasCompany = companyList.length > 0;
   const hasPrimaryCompany = companyList.some((company) => company?.isPrimary);
 
@@ -96,12 +97,21 @@ function InvoiceForm() {
   const ifsc = bankSettings.ifsc || "";
   const branch = bankSettings.branch || bankSettings.branchName || "";
   const upi = bankSettings.upi || "";
-  const defaultCgstRate =
-    Number(companySettings?.cgstRate ?? companySettings?.cgst) || 0;
-  const defaultSgstRate =
-    Number(companySettings?.sgstRate ?? companySettings?.sgst) || 0;
+  const getTaxRateValue = (value) => {
+    const rate = Number(value);
+    return Number.isFinite(rate) ? rate : 0;
+  };
+  const defaultCgstRate = getTaxRateValue(
+    companySettings?.cgstRate ?? companySettings?.cgst,
+  );
+  const defaultSgstRate = getTaxRateValue(
+    companySettings?.sgstRate ?? companySettings?.sgst,
+  );
+  const configuredIgstRate = getTaxRateValue(
+    companySettings?.igstRate ?? companySettings?.igst,
+  );
   const defaultIgstRate =
-    Number(companySettings?.igstRate ?? companySettings?.igst) || 0;
+    configuredIgstRate || defaultCgstRate + defaultSgstRate;
 
   // Calculate normalized state names early
   const normalizeStateName = (value = "") =>
@@ -112,6 +122,13 @@ function InvoiceForm() {
       .replace(/\s+/g, " ")
       .trim()
       .toLowerCase();
+
+  const getInvoiceTerms = (settings = {}) =>
+    settings?.terms ||
+    settings?.termsConditions ||
+    settings?.termsAndConditions ||
+    settings?.terms_conditions ||
+    "";
 
   const normalizedSellerState = normalizeStateName(sellerState);
 
@@ -263,6 +280,29 @@ function InvoiceForm() {
           setGstIn(invoice.gstIn || "");
           setIsGstBill(invoice.isGstBill !== false); // Default to true if not specified
 
+          const invoiceCompanyId = String(
+            invoice.companyId || invoice.company_id || primaryCompanyId || "",
+          );
+          if (invoiceCompanyId) {
+            try {
+              const settingsRes =
+                await settingsApi.getInvoiceSettings(invoiceCompanyId);
+              const rawSettings =
+                settingsRes?.data?.invoice || settingsRes?.data || {};
+              setRuntimeInvoiceSettings({
+                prefix: rawSettings?.prefix || rawSettings?.invoicePrefix || "",
+                padLength: Number(rawSettings?.padLength) || undefined,
+                terms: getInvoiceTerms(rawSettings),
+                financialYear: rawSettings?.financialYear || undefined,
+              });
+            } catch (error) {
+              console.error(
+                "InvoiceForm: Failed to fetch invoice settings for edit",
+                error,
+              );
+            }
+          }
+
           // Load products and store original tax rates for each row
           const loadedProducts = (invoice.products || []).map((product) => ({
             ...product,
@@ -359,7 +399,7 @@ function InvoiceForm() {
               setRuntimeInvoiceSettings({
                 prefix: raw?.prefix || raw?.invoicePrefix || "",
                 padLength: Number(raw?.padLength) || undefined,
-                terms: raw?.terms || raw?.termsConditions || "",
+                terms: getInvoiceTerms(raw),
                 financialYear: raw?.financialYear || undefined,
               });
               const startNumber = Number(raw?.startNumber) || 1;
@@ -385,7 +425,7 @@ function InvoiceForm() {
     };
 
     loadInvoiceForm();
-  }, [id, dispatch]);
+  }, [id, dispatch, primaryCompanyId]);
 
   // Calculate derived state for inter-state check
   const normalizedCustomerState = normalizeStateName(customerState);
@@ -458,14 +498,19 @@ function InvoiceForm() {
       if (isGstBill) {
         // GST is ON - restore original rates or use defaults
         const originalRates = originalTaxRatesRef.current[index];
+        const hasOriginalRates =
+          originalRates &&
+          (Number(originalRates.cgstRate) !== 0 ||
+            Number(originalRates.sgstRate) !== 0 ||
+            Number(originalRates.igstRate) !== 0);
 
-        const nextCgstRate = originalRates
+        const nextCgstRate = hasOriginalRates
           ? Number(originalRates.cgstRate).toFixed(2)
           : (isInterState ? 0 : defaultCgstRate).toFixed(2);
-        const nextSgstRate = originalRates
+        const nextSgstRate = hasOriginalRates
           ? Number(originalRates.sgstRate).toFixed(2)
           : (isInterState ? 0 : defaultSgstRate).toFixed(2);
-        const nextIgstRate = originalRates
+        const nextIgstRate = hasOriginalRates
           ? Number(originalRates.igstRate).toFixed(2)
           : (isInterState ? defaultIgstRate : 0).toFixed(2);
 
@@ -936,11 +981,8 @@ function InvoiceForm() {
     ...effectiveInvoiceSettings,
   });
   const termsTemplate = (
-    effectiveInvoiceSettings?.terms ||
-    effectiveInvoiceSettings?.termsConditions ||
-    invoiceSettings?.terms ||
-    invoiceSettings?.termsConditions ||
-    ""
+    getInvoiceTerms(effectiveInvoiceSettings) ||
+    getInvoiceTerms(invoiceSettings)
   )
     .toString()
     .trim();
