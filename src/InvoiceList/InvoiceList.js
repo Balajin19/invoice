@@ -11,6 +11,14 @@ import {
   showErrorToast,
 } from "../utils/helpers";
 
+const blobToDataUrl = (blob) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+
 function InvoiceList() {
   const [invoices, setInvoices] = useState([]);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(true);
@@ -94,6 +102,8 @@ function InvoiceList() {
       invoiceNumber,
       invoiceSettings,
     );
+    // Open synchronously (before any await) so popup blockers tie it to the click.
+    const previewWindow = window.open("", "_blank");
 
     try {
       const res = await invoiceApi.getPdf(invoiceId, orientation);
@@ -102,22 +112,28 @@ function InvoiceList() {
       }
 
       const blob = new Blob([res.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const printWindow = window.open(url, "_blank", "noopener,noreferrer");
-      if (!printWindow) {
-        // Fallback when popup is blocked: trigger download.
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${formattedInvoiceNumber}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
 
-      setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+      // Force a named download so Chrome/iOS keep the invoice filename and
+      // handle duplicate-numbering themselves, instead of relying on window.open.
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `${formattedInvoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => window.URL.revokeObjectURL(downloadUrl), 30000);
+
+      // Also show it in the tab opened above, using a data: URI instead of blob: URL.
+      // Note: some Chrome versions block top-level data: URL navigation, so this tab may not load.
+      if (previewWindow) {
+        const dataUrl = await blobToDataUrl(blob);
+        previewWindow.location.href = dataUrl;
+      }
     } catch (error) {
       console.error("Error generating invoice PDF:", error);
       showErrorToast("Unable to generate invoice PDF. Please try again.");
+      previewWindow?.close();
     }
   };
 
