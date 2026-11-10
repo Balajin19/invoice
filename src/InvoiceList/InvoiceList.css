@@ -25,6 +25,34 @@
   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
 }
 
+.invoice-table-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.invoice-table-scroll table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.invoice-table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #ffffff;
+  background-clip: padding-box;
+  box-shadow: inset 0 1px 0 #dee2e6, inset 0 -1px 0 #dee2e6;
+}
+
+.invoice-table-scroll thead th:first-child {
+  box-shadow: inset 1px 1px 0 #dee2e6, inset 0 -1px 0 #dee2e6;
+}
+
+.invoice-table-scroll thead th:last-child {
+  box-shadow: inset -1px 1px 0 #dee2e6, inset 0 -1px 0 #dee2e6;
+}
+
 .invoice-print-dialog-backdrop {
   position: fixed;
   inset: 0;
@@ -39,44 +67,4 @@
 .invoice-print-dialog {
   width: 100%;
   max-width: 420px;
-}
-
-.invoice-table-grid {
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.invoice-table-header,
-.invoice-table-row {
-  display: grid;
-  grid-template-columns: 70px 1.2fr 1fr 1.6fr 1fr 1.3fr;
-  align-items: center;
-}
-
-.invoice-table-header {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  border-bottom: 2px solid #dee2e6;
-}
-
-.invoice-table-row {
-  border-bottom: 1px solid #dee2e6;
-}
-
-.invoice-table-row:hover {
-  background-color: #f1f3f5;
-}
-
-.invoice-table-cell {
-  padding: 0.5rem 0.75rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.invoice-col-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
 }
