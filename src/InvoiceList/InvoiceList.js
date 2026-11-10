@@ -310,7 +310,7 @@ function InvoiceList() {
           </div>
         ))}
       {!isLoadingInvoices && (
-        <Link to="/" className="btn btn-secondary">
+        <Link to="/" className="btn btn-secondary mt-3">
           Back to Home
         </Link>
       )}

@@ -27,13 +27,25 @@
 
 .invoice-table-scroll {
   max-height: 60vh;
-  overflow-y: auto;
+  overflow: auto;
   position: relative;
 }
 
 .invoice-table-scroll table {
   border-collapse: separate;
   border-spacing: 0;
+}
+
+/* Override the global mobile .table display:block rule (index.css), which
+   creates its own overflow-x scroll container and breaks the sticky header.
+   Keep table layout here and let .invoice-table-scroll handle all scrolling. */
+@media (max-width: 992px) {
+  .invoice-table-scroll .table {
+    display: table;
+    width: 100%;
+    overflow-x: visible;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .invoice-table-scroll thead th {
