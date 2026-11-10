@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { List } from "react-window";
 import { useConfirmModal } from "../hooks/useConfirmModal";
 import { invoiceApi } from "../services/api";
 import "./InvoiceList.css";
@@ -11,13 +12,71 @@ import {
   showErrorToast,
 } from "../utils/helpers";
 
-const blobToDataUrl = (blob) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+const INVOICE_ROW_HEIGHT = 56;
+const INVOICE_LIST_MAX_HEIGHT = 600;
+
+function InvoiceRow({
+  ariaAttributes,
+  index,
+  style,
+  invoices,
+  invoiceSettings,
+  onOpenPrintDialog,
+  onDelete,
+}) {
+  const invoice = invoices[index];
+  const formattedInvoiceNumber = formatInvoiceNumber(
+    invoice.invoiceNumber,
+    invoiceSettings,
+  );
+  const formattedInvoiceDate = invoice?.invoiceDate
+    ? invoice.invoiceDate.split("T")[0]
+    : "-";
+
+  return (
+    <div className="invoice-table-row" style={style} {...ariaAttributes}>
+      <div className="invoice-table-cell invoice-col-sno">{index + 1}</div>
+      <div className="invoice-table-cell invoice-col-number">
+        {formattedInvoiceNumber}
+      </div>
+      <div className="invoice-table-cell invoice-col-date">
+        {formattedInvoiceDate}
+      </div>
+      <div
+        className="invoice-table-cell invoice-col-customer"
+        title={invoice.customerName}
+      >
+        {invoice.customerName}
+      </div>
+      <div className="invoice-table-cell invoice-col-total">
+        ₹{invoice.totalAmount}
+      </div>
+      <div className="invoice-table-cell invoice-col-actions">
+        <Link to={`/invoice/${invoice.invoiceId}`}>
+          <i
+            className="bi bi-eye text-primary"
+            title="View Invoice"
+            style={{ cursor: "pointer" }}
+          ></i>
+        </Link>
+        <i
+          className="bi bi-printer text-success"
+          title="Print Invoice"
+          style={{ cursor: "pointer" }}
+          onClick={() =>
+            onOpenPrintDialog(invoice.invoiceId, invoice.invoiceNumber)
+          }
+        ></i>
+        <i
+          className="bi bi-trash text-danger"
+          title="Delete Invoice"
+          style={{ cursor: "pointer" }}
+          onClick={() => onDelete(invoice.invoiceId, invoice.invoiceNumber)}
+        ></i>
+      </div>
+    </div>
+  );
+}
 
 function InvoiceList() {
   const [invoices, setInvoices] = useState([]);
@@ -71,10 +130,13 @@ function InvoiceList() {
       const activeInvoices = Array.isArray(res?.data)
         ? res.data.filter(isInvoiceActive)
         : [];
-      activeInvoices.sort(
-        (firstInvoice, secondInvoice) =>
-          Number(firstInvoice.invoiceNumber) -
-          Number(secondInvoice.invoiceNumber),
+      // Natural compare: invoiceNumber may be a string (e.g. "SK/012/25-26"), which Number() turns into NaN
+      activeInvoices.sort((firstInvoice, secondInvoice) =>
+        String(secondInvoice.invoiceNumber ?? "").localeCompare(
+          String(firstInvoice.invoiceNumber ?? ""),
+          undefined,
+          { numeric: true },
+        ),
       );
       setInvoices(activeInvoices);
       setHasInvoicesLoadError(false);
@@ -102,8 +164,6 @@ function InvoiceList() {
       invoiceNumber,
       invoiceSettings,
     );
-    // Open synchronously (before any await) so popup blockers tie it to the click.
-    const previewWindow = window.open("", "_blank");
 
     try {
       const res = await invoiceApi.getPdf(invoiceId, orientation);
@@ -114,7 +174,7 @@ function InvoiceList() {
       const blob = new Blob([res.data], { type: "application/pdf" });
 
       // Force a named download so Chrome/iOS keep the invoice filename and
-      // handle duplicate-numbering themselves, instead of relying on window.open.
+      // handle duplicate-numbering themselves.
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
@@ -123,17 +183,9 @@ function InvoiceList() {
       link.click();
       document.body.removeChild(link);
       setTimeout(() => window.URL.revokeObjectURL(downloadUrl), 30000);
-
-      // Also show it in the tab opened above, using a data: URI instead of blob: URL.
-      // Note: some Chrome versions block top-level data: URL navigation, so this tab may not load.
-      if (previewWindow) {
-        const dataUrl = await blobToDataUrl(blob);
-        previewWindow.location.href = dataUrl;
-      }
     } catch (error) {
       console.error("Error generating invoice PDF:", error);
       showErrorToast("Unable to generate invoice PDF. Please try again.");
-      previewWindow?.close();
     }
   };
 
@@ -255,67 +307,42 @@ function InvoiceList() {
         ) : filteredInvoices.length === 0 ? (
           <p>No invoice found.</p>
         ) : (
-          <table className="table table-bordered">
-            <thead>
-              <tr>
-                <th>S.No</th>
-                <th>Invoice No</th>
-                <th>Date</th>
-                <th>Customer</th>
-                <th>Total</th>
-                <th>Action</th>
-              </tr>
-            </thead>
+          <div className="invoice-table-grid">
+            <div className="invoice-table-header">
+              <div className="invoice-table-cell invoice-col-sno">S.No</div>
+              <div className="invoice-table-cell invoice-col-number">
+                Invoice No
+              </div>
+              <div className="invoice-table-cell invoice-col-date">Date</div>
+              <div className="invoice-table-cell invoice-col-customer">
+                Customer
+              </div>
+              <div className="invoice-table-cell invoice-col-total">Total</div>
+              <div className="invoice-table-cell invoice-col-actions">
+                Action
+              </div>
+            </div>
 
-            <tbody>
-              {filteredInvoices.map((invoice, index) => {
-                const formattedInvoiceNumber = formatInvoiceNumber(
-                  invoice.invoiceNumber,
-                  invoiceSettings,
-                );
-                const formattedInvoiceDate = invoice?.invoiceDate
-                  ? invoice.invoiceDate.split("T")[0]
-                  : "-";
-                return (
-                  <tr key={index}>
-                    <td>{index + 1}</td>
-                    <td>{formattedInvoiceNumber}</td>
-                    <td>{formattedInvoiceDate}</td>
-                    <td>{invoice.customerName}</td>
-                    <td>₹{invoice.totalAmount}</td>
-                    <td className="d-flex align-items-center gap-3">
-                      <Link to={`/invoice/${invoice.invoiceId}`}>
-                        <i
-                          className="bi bi-eye text-primary"
-                          title="View Invoice"
-                          style={{ cursor: "pointer" }}
-                        ></i>
-                      </Link>
-                      <i
-                        className="bi bi-printer text-success"
-                        title="Print Invoice"
-                        style={{ cursor: "pointer" }}
-                        onClick={() =>
-                          openPrintDialog(
-                            invoice.invoiceId,
-                            invoice.invoiceNumber,
-                          )
-                        }
-                      ></i>
-                      <i
-                        className="bi bi-trash text-danger"
-                        title="Delete Invoice"
-                        style={{ cursor: "pointer" }}
-                        onClick={() =>
-                          handleDelete(invoice.invoiceId, invoice.invoiceNumber)
-                        }
-                      ></i>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+            <List
+              style={{
+                height: Math.min(
+                  filteredInvoices.length * INVOICE_ROW_HEIGHT,
+                  INVOICE_LIST_MAX_HEIGHT,
+                ),
+                width: "100%",
+              }}
+              rowCount={filteredInvoices.length}
+              rowHeight={INVOICE_ROW_HEIGHT}
+              rowKey={(index, data) => data.invoices[index].invoiceId}
+              rowProps={{
+                invoices: filteredInvoices,
+                invoiceSettings,
+                onOpenPrintDialog: openPrintDialog,
+                onDelete: handleDelete,
+              }}
+              rowComponent={InvoiceRow}
+            />
+          </div>
         ))}
       {!isLoadingInvoices && (
         <Link to="/" className="btn btn-secondary">

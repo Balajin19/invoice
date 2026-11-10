@@ -40,3 +40,43 @@
   width: 100%;
   max-width: 420px;
 }
+
+.invoice-table-grid {
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.invoice-table-header,
+.invoice-table-row {
+  display: grid;
+  grid-template-columns: 70px 1.2fr 1fr 1.6fr 1fr 1.3fr;
+  align-items: center;
+}
+
+.invoice-table-header {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.invoice-table-row {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.invoice-table-row:hover {
+  background-color: #f1f3f5;
+}
+
+.invoice-table-cell {
+  padding: 0.5rem 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invoice-col-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
