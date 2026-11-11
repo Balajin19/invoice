@@ -97,16 +97,12 @@ function InvoiceList() {
 
       const blob = new Blob([res.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
-      const printWindow = window.open(url, "_blank", "noopener,noreferrer");
-      if (!printWindow) {
-        // Fallback when popup is blocked: trigger download.
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${formattedInvoiceNumber}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${formattedInvoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
       setTimeout(() => window.URL.revokeObjectURL(url), 30000);
     } catch (error) {
